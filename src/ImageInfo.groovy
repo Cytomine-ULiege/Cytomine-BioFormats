@@ -1,8 +1,6 @@
 import loci.formats.FormatException
 import loci.formats.IFormatReader
 import loci.formats.ImageReader
-import loci.formats.meta.MetadataRetrieve
-import loci.formats.meta.MetadataStore
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -27,12 +25,8 @@ class ImageInfo {
     }
 
     int readCoreMetadata(IFormatReader reader) throws FormatException, IOException {
-
         int seriesCount = reader.getSeriesCount()
         LOGGER.info("Series count = " + seriesCount)
-        MetadataStore ms = reader.getMetadataStore()
-
-        MetadataRetrieve mr = (MetadataRetrieve) ms
 
         int maximum = -1
         long maximumSize = -1

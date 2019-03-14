@@ -52,17 +52,13 @@ public class ClientWorker implements Runnable {
     }
 
     public void run() {
-        LOGGER.info("Connection enabled");
-
-        String inputLine, outputLine;
-        BufferedReader in;
-        PrintWriter out;
+        LOGGER.info("Run worker...");
         try {
-            in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-            out = new PrintWriter(client.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+            PrintWriter out = new PrintWriter(client.getOutputStream(), true);
+            String inputLine, outputLine;
 
             ConvertorProtocol protocol = new ConvertorProtocol();
-
             while ((inputLine = in.readLine()) != null) {
                 LOGGER.info("get input: " + inputLine);
                 outputLine = protocol.processInput(inputLine);

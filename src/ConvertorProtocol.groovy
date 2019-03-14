@@ -42,16 +42,16 @@ class ConvertorProtocol {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConvertorProtocol.class)
 
-    String processInput(String theInput) {
+    static String processInput(String input) {
         def response = [:]
 
         try {
-            LOGGER.info("input: " + theInput)
+            LOGGER.info("input: " + input)
 
-            if (theInput == null || theInput == "")
+            if (input == null || input == "")
                 throw new FormatException("Error : Input is null or empty")
 
-            def json = new JsonSlurper().parseText(theInput)
+            def json = new JsonSlurper().parseText(input)
             if (json.size() == 0) throw new FormatException("Formatting error")
 
             if (json.keySet().sort() != ["group", "onlyBiggestSerie", "path"]) {
@@ -70,7 +70,8 @@ class ConvertorProtocol {
 
             LOGGER.info("json: " + json.path + " " + json.group + " " + json.onlyBiggestSerie)
 
-            def files = new Convertor().conversion(json.path, Boolean.parseBoolean(json.group), Boolean.parseBoolean(json.onlyBiggestSerie))
+            def files = new Convertor().conversion(json.path as String, Boolean.parseBoolean(json.group),
+                    Boolean.parseBoolean(json.onlyBiggestSerie))
             response.put("files", files)
         } catch (Exception e) {
             response.put("error", e.toString())

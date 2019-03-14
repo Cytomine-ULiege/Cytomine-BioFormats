@@ -35,15 +35,10 @@
 
 
 import loci.common.DebugTools
-import loci.common.services.DependencyException
-import loci.common.services.ServiceException
-import loci.common.services.ServiceFactory
 import loci.formats.IFormatReader
 import loci.formats.ImageReader
 import loci.formats.ImageWriter
-import loci.formats.meta.IMetadata
-import loci.formats.out.OMETiffWriter
-import loci.formats.services.OMEXMLService
+import loci.formats.tools.ImageConverter
 import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -61,75 +56,19 @@ class Convertor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Convertor.class)
     private int serieNumber = -1
 
-
     def conversion(String input, boolean group, boolean onlyBiggestSerie) throws Exception {
 
         if (onlyBiggestSerie) {
-            ImageInfo info = new ImageInfo()
-            serieNumber = info.getLargestSerie(input)
+            serieNumber = new ImageInfo().getLargestSerie(input)
         }
-
 
         def results = []
         if (group) {
-
-            DebugTools.enableLogging("INFO");
-            String out
+            DebugTools.enableLogging("INFO")
 
             String parentFolder = input.substring(0, input.lastIndexOf("/"))
-
-            //first, we create the convertor target directory
             File target_directory = createTargetDirectory(parentFolder)
-
-            LOGGER.info(input)
-
-            out = input.substring(input.lastIndexOf("/") + 1)
-            /*out = out.substring(0, out.lastIndexOf("."))+"_converted";
-
-            LOGGER.info(out);
-            out = convert(input, out);
-            LOGGER.info(out);
-
-            LOGGER.info("[DONE]: First pass completed successfully");
-
-            LOGGER.info("Loading file for the second pass in order to split it");
-            Thread.sleep(4000);
-
-
-
-            String output_directory = target_directory.getAbsolutePath()+"/";
-            String basePath = output_directory+out.substring(0, out.lastIndexOf("."));
-
-            split(out, basePath, spliting_mode);
-
-            LOGGER.info("\t\t\t\t\n[DONE!]: The results of all the conversion process can be found in "+output_directory+" directory.");
-            LOGGER.info("\n");
-            int nb_files = target_directory.listFiles().length;
-            LOGGER.info("\t\t\t\tNumber of files to be upload on server is: "+nb_files);
-
-            if(nb_files < z*t*c)
-                throw new Exception("Error during the conversion")
-
-            LOGGER.info("[DONE!]");
-
-            String[] names = target_directory.listFiles().collect {it.getAbsolutePath()};
-            names.each { name ->
-                def result = new JSONObject();
-                result.put("path", name);
-                name = name.substring(basePath.length())
-                Pattern p = Pattern.compile("\\d+");
-                Matcher m = p.matcher(name);
-                if (m.find()) {
-                    result.put("z", m.group());
-                }
-                if (m.find()) {
-                    result.put("t", m.group());
-                }
-                if (m.find()) {
-                    result.put("c", m.group());
-                }
-                results.add(result);
-            }*/
+            String out = input.substring(input.lastIndexOf("/") + 1)
 
             String output_directory = target_directory.getAbsolutePath() + "/"
             String basePath = output_directory + out.substring(0, out.lastIndexOf("."))
@@ -149,28 +88,16 @@ class Convertor {
 
             LOGGER.info("args")
             LOGGER.info(args.join(" "))
-            //System.sleep(10000)
 
-            new loci.formats.tools.ImageConverter().testConvert(new ImageWriter(), (String[]) args.toArray())
-
-
+            new ImageConverter().testConvert(new ImageWriter(), (String[]) args.toArray())
             String[] names = target_directory.listFiles().collect { it.getAbsolutePath() }
 
-            /*println "names size"
-            println names.size()
-
-            println names[0]*/
             if (names.size() == 1) {
-
-                //File file =new File(basePath+"_Z%z_C%c_T%t.tiff");
                 def command = "mv " + names[0] + " " + basePath + ".tiff"
                 LOGGER.info(command)
                 command.execute().waitFor()
-                //file.renameTo(new File(basePath+".tiff"))
-
                 names[0] = basePath + ".tiff"
             }
-            //println names[0]
 
             names.each { name ->
                 def result = [:]
@@ -197,7 +124,6 @@ class Convertor {
             output += ".tiff"
             output = input.substring(0, input.lastIndexOf("/") + 1) + output
 
-            loci.formats.tools.ImageConverter converter = new loci.formats.tools.ImageConverter()
             ArrayList<String> args = []
             args << "-bigtiff"
             args << "-compression"
@@ -221,17 +147,14 @@ class Convertor {
             reader.setOriginalMetadataPopulated(true)
             reader.setId(input)
 
-
             LOGGER.info("args")
             LOGGER.info(args.join(" "))
-            converter.testConvert(new ImageWriter(), (String[]) args.toArray())
-
+            new ImageConverter().testConvert(new ImageWriter(), (String[]) args.toArray())
 
             def result = [:]
             result.put("path", output)
             results.add(result)
         }
-
 
         LOGGER.info("conversion result")
         LOGGER.info(results.toString())
