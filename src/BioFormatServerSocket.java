@@ -33,12 +33,11 @@
  * policies, either expressed or implied, of any organization.
  */
 
-import loci.formats.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.*;
-import java.io.*;
+import java.io.IOException;
+import java.net.ServerSocket;
 
 public class BioFormatServerSocket {
 
@@ -46,7 +45,7 @@ public class BioFormatServerSocket {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BioFormatServerSocket.class);
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
 
         if (args.length != 1) {
             LOGGER.error("Usage: java BioFormat <port number>");
@@ -56,17 +55,13 @@ public class BioFormatServerSocket {
         int portNumber = Integer.parseInt(args[0]);
 
         LOGGER.info("initialization : done");
-        try (
-                ServerSocket serverSocket = new ServerSocket(portNumber);
-        ) {
-
-            while(true) {
+        try (ServerSocket serverSocket = new ServerSocket(portNumber)) {
+            while (true) {
                 ClientWorker w;
                 w = new ClientWorker(serverSocket.accept());
                 Thread t = new Thread(w);
                 t.start();
             }
-
         } catch (IOException e) {
             LOGGER.error("Exception caught when trying to listen on port "
                     + portNumber + " or listening for a connection");

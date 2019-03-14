@@ -1,24 +1,24 @@
 /**
  * This class provided by ome team has been modified in order to be used in this project
- *
- *
+ * <p>
+ * <p>
  * Application based on the OME-BIOFORMATS C++ library for image IO.
  * Copyright © 2006 - 2014 Open Microscopy Environment:
- *   - Massachusetts Institute of Technology
- *   - National Institutes of Health
- *   - University of Dundee
- *   - Board of Regents of the University of Wisconsin-Madison
- *   - Glencoe Software, Inc.
+ * - Massachusetts Institute of Technology
+ * - National Institutes of Health
+ * - University of Dundee
+ * - Board of Regents of the University of Wisconsin-Madison
+ * - Glencoe Software, Inc.
  * %%
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *
+ * <p>
  * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
+ * this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * <p>
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -30,28 +30,18 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- *
+ * <p>
  * The views and conclusions contained in the software and documentation are
  * those of the authors and should not be interpreted as representing official
  * policies, either expressed or implied, of any organization.
  */
-
-import java.awt.image.IndexColorModel;
-import java.io.IOException;
 
 import loci.common.DataTools;
 import loci.common.services.DependencyException;
 import loci.common.services.ServiceException;
 import loci.common.services.ServiceFactory;
 import loci.formats.FormatException;
-import loci.formats.FormatTools;
-import loci.formats.IFormatReader;
-import loci.formats.IFormatWriter;
-import loci.formats.ImageReader;
-import loci.formats.ImageWriter;
-import loci.formats.MetadataTools;
-import loci.formats.MinMaxCalculator;
-import loci.formats.MissingLibraryException;
+import loci.formats.*;
 import loci.formats.gui.Index16ColorModel;
 import loci.formats.meta.MetadataRetrieve;
 import loci.formats.meta.MetadataStore;
@@ -59,11 +49,12 @@ import loci.formats.out.TiffWriter;
 import loci.formats.services.OMEXMLService;
 import loci.formats.services.OMEXMLServiceImpl;
 import loci.formats.tiff.IFD;
-
 import ome.xml.model.primitives.PositiveInteger;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.awt.image.IndexColorModel;
+import java.io.IOException;
 
 /**
  * ImageConverter is a utility class for converting a file between formats.
@@ -83,7 +74,7 @@ public final class ImageConverter {
     private String in = null, out = null;
     private boolean group = true;
     private int xCoordinate = 0, yCoordinate = 0, width = 0, height = 0;
-    private int z=0, t=0, c=0;
+    private int z = 0, t = 0, c = 0;
 
     private IFormatReader reader;
     private MinMaxCalculator minMax;
@@ -94,13 +85,22 @@ public final class ImageConverter {
         this.in = in;
         this.out = out;
     }
-    public int getZ(){ return z; }
-    public int getT(){ return t; }
-    public int getC(){ return c; }
+
+    public int getZ() {
+        return z;
+    }
+
+    public int getT() {
+        return t;
+    }
+
+    public int getC() {
+        return c;
+    }
     // -- Utility methods --
 
     /** A utility method for converting a file from the command line. */
-    public boolean testConvert(IFormatWriter writer, boolean bigtiff) throws FormatException, IOException{
+    public boolean testConvert(IFormatWriter writer, boolean bigtiff) throws FormatException, IOException {
 
         long start = System.currentTimeMillis(); //to mesure the runtime
 
@@ -115,11 +115,9 @@ public final class ImageConverter {
             ServiceFactory factory = new ServiceFactory();
             service = factory.getInstance(OMEXMLService.class);
             reader.setMetadataStore(service.createOMEXMLMetadata());
-        }
-        catch (DependencyException de) {
+        } catch (DependencyException de) {
             throw new MissingLibraryException(OMEXMLServiceImpl.NO_OME_XML_MSG, de);
-        }
-        catch (ServiceException se) {
+        } catch (ServiceException se) {
             throw new FormatException(se);
         }
         //reader is an object instance of an Interface "IFormatReader" for all biological file format readers.
@@ -156,7 +154,7 @@ public final class ImageConverter {
 
         if (store instanceof MetadataRetrieve) {
             //here, we don't need to specify the series image
-            for (int i=0; i<reader.getSeriesCount(); i++) {
+            for (int i = 0; i < reader.getSeriesCount(); i++) {
                 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ici le if est peeut etre de l'étudiant !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 if (width != reader.getSizeX() || height != reader.getSizeY()) { //if, it does not a crop
                     // Ignoring Plane element, complex property
@@ -172,8 +170,7 @@ public final class ImageConverter {
 
         if (writer instanceof TiffWriter) { //the case of bigTiff type, force BIGTIFF file to be written
             ((TiffWriter) writer).setBigTiff(bigtiff);
-        }
-        else if (writer instanceof ImageWriter) { //yet, the bigTiff case
+        } else if (writer instanceof ImageWriter) { //yet, the bigTiff case
             IFormatWriter w = ((ImageWriter) writer).getWriter(out);
             if (w instanceof TiffWriter) {
                 ((TiffWriter) w).setBigTiff(bigtiff);
@@ -181,7 +178,7 @@ public final class ImageConverter {
         }
 
         String format = writer.getFormat(); //retrieve the output format
-        LOGGER.info("[{}] -> {} [{}]", new Object[] {reader.getFormat(), out, format});
+        LOGGER.info("[{}] -> {} [{}]", reader.getFormat(), out, format);
 
         long mid = System.currentTimeMillis(); //for writting runtime
 
@@ -193,8 +190,8 @@ public final class ImageConverter {
         long timeLastLogged = System.currentTimeMillis();
 
         // !!!!!!!!!!!!!!!!!!!!Il a aussi ajouté ce println !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        System.out.println("Test convert last = "+last);
-        for (int q=first; q<last; q++) { //here, we read and write the image series, from the first to the last
+        System.out.println("Test convert last = " + last);
+        for (int q = first; q < last; q++) { //here, we read and write the image series, from the first to the last
             reader.setSeries(q);
 
             if (!dimensionsSet) {
@@ -216,15 +213,15 @@ public final class ImageConverter {
 
             int count = 0;
             // !!!!!!!!!!!!!!!!!Les 3 println et les 3 var!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            System.out.println("Test convert c = "+reader.getSizeC());
+            System.out.println("Test convert c = " + reader.getSizeC());
             z = reader.getSizeZ();
             //c = reader.getSizeC();
             c = reader.getEffectiveSizeC();
             t = reader.getSizeT();
 
-            System.out.println("Test convert startPlane = "+startPlane);
-            System.out.println("Test convert endPlane = "+endPlane);
-            for (int i=startPlane; i<endPlane; i++) { //retrieve planes and write its
+            System.out.println("Test convert startPlane = " + startPlane);
+            System.out.println("Test convert endPlane = " + endPlane);
+            for (int i = startPlane; i < endPlane; i++) { //retrieve planes and write its
 
                 //Note that the extension of the file name passed to ‘writer.setId(…)’ determines the file format of the exported file.
                 writer.setId(FormatTools.getFilename(q, i, reader, out));
@@ -246,10 +243,9 @@ public final class ImageConverter {
                         sb.append("Series ");
                         sb.append(q);
                         sb.append(": converted ");
-                    }
-                    else sb.append("Converted ");
+                    } else sb.append("Converted ");
                     LOGGER.info(sb.toString() + "{}/{} planes ({}%)",
-                            new Object[] {current, numImages, percent});
+                            current, numImages, percent);
                     timeLastLogged = e;
                 }
                 count++;
@@ -266,7 +262,7 @@ public final class ImageConverter {
         float readAvg = (float) read / total;
         float writeAvg = (float) write / total;
         LOGGER.info("{}s elapsed ({}+{}ms per plane, {}ms overhead)",
-                new Object[] {sec, readAvg, writeAvg, initial});
+                sec, readAvg, writeAvg, initial);
 
         return true;
     } //end  of the testConvert method
@@ -274,16 +270,14 @@ public final class ImageConverter {
 
     //========================================================= -- Helper methods -- =================================================================
 
-    private long convertPlane(IFormatWriter writer, int index, int startPlane) throws FormatException, IOException{
+    private long convertPlane(IFormatWriter writer, int index, int startPlane) throws FormatException, IOException {
         if (DataTools.safeMultiply64(width, height) >=
-                DataTools.safeMultiply64(4096, 4096))
-        {
+                DataTools.safeMultiply64(4096, 4096)) {
             // this is a "big image", so we will attempt to convert it one tile
             // at a time
 
             if ((writer instanceof TiffWriter) || ((writer instanceof ImageWriter) &&
-                    (((ImageWriter) writer).getWriter(out) instanceof TiffWriter)))
-            {
+                    (((ImageWriter) writer).getWriter(out) instanceof TiffWriter))) {
                 return convertTilePlane(writer, index, startPlane);
             }
         }
@@ -299,9 +293,7 @@ public final class ImageConverter {
     }
 
 
-
-
-    private long convertTilePlane(IFormatWriter writer, int index, int startPlane) throws FormatException, IOException{
+    private long convertTilePlane(IFormatWriter writer, int index, int startPlane) throws FormatException, IOException {
         int w = reader.getOptimalTileWidth();
         int h = reader.getOptimalTileHeight();
         int nXTiles = width / w;
@@ -319,8 +311,8 @@ public final class ImageConverter {
         ifd.put(IFD.TILE_LENGTH, h);
 
         Long m = null;
-        for (int y=0; y<nYTiles; y++) {
-            for (int x=0; x<nXTiles; x++) {
+        for (int y = 0; y < nYTiles; y++) {
+            for (int x = 0; x < nXTiles; x++) {
                 int tileX = xCoordinate + x * w;
                 int tileY = yCoordinate + y * h;
                 int tileWidth = x < nXTiles - 1 ? w : width - (w * x);
@@ -337,8 +329,7 @@ public final class ImageConverter {
                 if (writer instanceof TiffWriter) {
                     ((TiffWriter) writer).saveBytes(index - startPlane, buf,
                             ifd, tileX, tileY, tileWidth, tileHeight);
-                }
-                else if (writer instanceof ImageWriter) {
+                } else if (writer instanceof ImageWriter) {
                     IFormatWriter baseWriter = ((ImageWriter) writer).getWriter(out);
                     if (baseWriter instanceof TiffWriter) {
                         ((TiffWriter) baseWriter).saveBytes(index - startPlane, buf, ifd,
@@ -351,14 +342,13 @@ public final class ImageConverter {
     }
 
 
-    private void applyLUT(IFormatWriter writer) throws FormatException, IOException{
+    private void applyLUT(IFormatWriter writer) throws FormatException, IOException {
         byte[][] lut = reader.get8BitLookupTable();
         if (lut != null) {
             IndexColorModel model = new IndexColorModel(8, lut[0].length,
                     lut[0], lut[1], lut[2]);
             writer.setColorModel(model);
-        }
-        else {
+        } else {
             short[][] lut16 = reader.get16BitLookupTable();
             if (lut16 != null) {
                 Index16ColorModel model = new Index16ColorModel(16, lut16[0].length,

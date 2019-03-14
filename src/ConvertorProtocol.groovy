@@ -34,42 +34,46 @@
  */
 
 import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class ConvertorProtocol {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConvertorProtocol.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConvertorProtocol.class)
 
-    public String processInput(String theInput) {
+    String processInput(String theInput) {
         def response = [:]
 
         try {
+            LOGGER.info("input: " + theInput)
 
-            LOGGER.info("input: " + theInput);
+            if (theInput == null || theInput == "")
+                throw new FormatException("Error : Input is null or empty")
 
-            if(theInput == null || theInput == "") throw new FormatException("Error : Input is null or empty");
-            def json = JSON.parse(theInput);
-            if(json.isEmpty()) throw new FormatException("Formatting error");
+            def json = new JsonSlurper().parseText(theInput)
+            if (json.size() == 0) throw new FormatException("Formatting error")
 
-            if(json.names().sort()  != ["group","onlyBiggestSerie","path"] ) {
-                response.put("error", "Some parameters of the JSON are invalid :"+json.names());
+            if (json.keySet().sort() != ["group", "onlyBiggestSerie", "path"]) {
+                response.put("error", "Some parameters of the JSON are invalid :" + json.keySet())
                 return response.toString()
             }
 
-            if(json.path == null || json.message =="") throw new FormatException("path is null or empty");
+            if (json.path == null || json.message == "")
+                throw new FormatException("path is null or empty")
 
-            File file = new File(json.path);
-            if(!file.exists()) throw new Exception("The file of path "+json.path+" doesn't exist");
-            if(!file.canRead()) throw new Exception("The file of path "+json.path+" is not readable");
+            File file = new File(json.path)
+            if (!file.exists())
+                throw new Exception("The file of path " + json.path + " doesn't exist")
+            if (!file.canRead())
+                throw new Exception("The file of path " + json.path + " is not readable")
 
-            Convertor convertor = new Convertor();
-            LOGGER.info("json: " + json.path +" "+ json.group +" "+ json.onlyBiggestSerie);
+            LOGGER.info("json: " + json.path + " " + json.group + " " + json.onlyBiggestSerie)
 
-            def files = convertor.conversion(json.path, json.group, json.onlyBiggestSerie)
+            def files = new Convertor().conversion(json.path, Boolean.parseBoolean(json.group), Boolean.parseBoolean(json.onlyBiggestSerie))
             response.put("files", files)
         } catch (Exception e) {
-            response.put("error", e.toString());
+            response.put("error", e.toString())
         }
 
         return JsonOutput.toJson(response)
