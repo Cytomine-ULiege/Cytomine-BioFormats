@@ -33,9 +33,7 @@
  * policies, either expressed or implied, of any organization.
  */
 
-import grails.converters.JSON
-import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
-import org.codehaus.groovy.grails.web.json.JSONObject
+import groovy.json.JsonOutput
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -44,7 +42,7 @@ class ConvertorProtocol {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConvertorProtocol.class);
 
     public String processInput(String theInput) {
-        def response = new JSONObject()
+        def response = [:]
 
         try {
 
@@ -70,13 +68,10 @@ class ConvertorProtocol {
 
             def files = convertor.conversion(json.path, json.group, json.onlyBiggestSerie)
             response.put("files", files)
-
-        } catch (ConverterException e) {
-            response.put("error", "The input must be a well written JSON");
         } catch (Exception e) {
             response.put("error", e.toString());
         }
 
-        return response.toString()
+        return JsonOutput.toJson(response)
     }
 }

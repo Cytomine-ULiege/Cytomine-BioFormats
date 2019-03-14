@@ -33,8 +33,6 @@
  * policies, either expressed or implied, of any organization.
  */
 
-import org.codehaus.groovy.grails.web.json.JSONArray
-import org.codehaus.groovy.grails.web.json.JSONObject
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -66,7 +64,7 @@ public class Convertor {
     private int serieNumber = -1;
 
 
-    public JSONArray conversion(String input, boolean group, boolean onlyBiggestSerie) throws Exception {
+    public def conversion(String input, boolean group, boolean onlyBiggestSerie) throws Exception {
 
         if(onlyBiggestSerie) {
             ImageInfo info = new ImageInfo();
@@ -74,7 +72,7 @@ public class Convertor {
         }
 
 
-        def results = new JSONArray();
+        def results = []
         if(group) {
             String out;
 
@@ -175,7 +173,7 @@ public class Convertor {
             //println names[0]
 
             names.each { name ->
-                def result = new JSONObject();
+                def result = [:]
                 result.put("path", name);
                 name = name.substring(basePath.length())
                 Pattern p = Pattern.compile("\\d+");
@@ -229,7 +227,7 @@ public class Convertor {
             converter.testConvert(new ImageWriter(), (String[])args.toArray())
 
 
-            def result = new JSONObject();
+            def result =[:]
             result.put("path", output);
             results.add(result);
         }
