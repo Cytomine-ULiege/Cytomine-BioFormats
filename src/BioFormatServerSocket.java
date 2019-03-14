@@ -1,6 +1,6 @@
 /*
  * Application based on the OME-BIOFORMATS C++ library for image IO.
- * Copyright © 2006 - 2014 Open Microscopy Environment:
+ * Copyright © 2006 - 2019 Open Microscopy Environment:
  *   - Massachusetts Institute of Technology
  *   - National Institutes of Health
  *   - University of Dundee
@@ -33,6 +33,7 @@
  * policies, either expressed or implied, of any organization.
  */
 
+import loci.formats.FormatTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,9 +41,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 
 public class BioFormatServerSocket {
-
-    //Use BioFormat v5.3.3
-
     private static final Logger LOGGER = LoggerFactory.getLogger(BioFormatServerSocket.class);
 
     public static void main(String[] args) {
@@ -54,7 +52,11 @@ public class BioFormatServerSocket {
 
         int portNumber = Integer.parseInt(args[0]);
 
-        LOGGER.info("initialization : done");
+        LOGGER.info("Use BioFormats " + FormatTools.VERSION);
+        LOGGER.info("Version date: " + FormatTools.DATE);
+        LOGGER.info("Last commit: " + FormatTools.VCS_REVISION);
+        LOGGER.info("Listen on port " + portNumber);
+
         try (ServerSocket serverSocket = new ServerSocket(portNumber)) {
             while (true) {
                 ClientWorker w;
@@ -67,36 +69,5 @@ public class BioFormatServerSocket {
                     + portNumber + " or listening for a connection");
             LOGGER.error(e.getMessage());
         }
-
-        /*ConvertorProtocol protocol = new ConvertorProtocol();
-        try {
-            Thread.sleep(4000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        protocol.processInput("{path:\"/tmp/slice-2_DAPI-NeuN-AT8.czi\",group:true,onlyBiggestSerie:true}");
-        //protocol.processInput("{path:\"/tmp/vsi/Image_02_controle_posFOXP3.vsi\",group:false,onlyBiggestSerie:true}");
-
-        //protocol.processInput("{path:\"/home/hoyoux/Desktop/images_test_iip/VSI/Movie_763.vsi\"}");
-        //protocol.processInput("{path:\"/home/hoyoux/Desktop/images_test_iip/DICOM/CHEVALSHETL.CHEYENNE-FERA_/IMAGES/IM2\"}");
-
-        /*try {
-            Thread.sleep(4000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        protocol.processInput("{path:\"/home/hoyoux/Desktop/test/multi-channel.ome_converted.tiff\"}");
-        try {
-            Thread.sleep(4000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        protocol.processInput("{path:\"/home/hoyoux/Desktop/test/multi-channel-4D-series.ome_converted.tiff\"}");
-        try {
-            Thread.sleep(4000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        protocol.processInput("{path:\"/home/hoyoux/Desktop/test/Zeiss-1-Merged_converted.tiff\"}");*/
     }
 }
