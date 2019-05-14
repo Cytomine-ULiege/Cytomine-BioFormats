@@ -1,6 +1,8 @@
+package be.cytomine.bioformats;
+
 /*
  * Application based on the OME-BIOFORMATS C++ library for image IO.
- * Copyright © 2006 - 2014 Open Microscopy Environment:
+ * Copyright © 2006 - 2019 Open Microscopy Environment:
  *   - Massachusetts Institute of Technology
  *   - National Institutes of Health
  *   - University of Dundee
@@ -33,40 +35,40 @@
  * policies, either expressed or implied, of any organization.
  */
 
+import loci.formats.FormatTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
+import java.net.ServerSocket;
 
-public class ClientWorker implements Runnable {
-    private Socket client;
+public class BioFormatServerSocket {
+    private static final Logger log = LoggerFactory.getLogger(BioFormatServerSocket.class);
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClientWorker.class);
+    public static void main(String[] args) {
 
-    ClientWorker(Socket client) {
-        this.client = client;
-    }
+        if (args.length != 1) {
+            log.error("Usage: java BioFormat <port number>");
+            System.exit(1);
+        }
 
-    public void run() {
-        LOGGER.info("Run worker...");
-        try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-            PrintWriter out = new PrintWriter(client.getOutputStream(), true);
-            String inputLine, outputLine;
+        int portNumber = Integer.parseInt(args[0]);
 
-            ConvertorProtocol protocol = new ConvertorProtocol();
-            while ((inputLine = in.readLine()) != null) {
-                LOGGER.info("get input: " + inputLine);
-                outputLine = protocol.processInput(inputLine);
-                LOGGER.info("return: " + outputLine);
-                out.println(outputLine);
+        log.info("Use BioFormats " + FormatTools.VERSION);
+        log.info("Version date: " + FormatTools.DATE);
+        log.info("Last commit: " + FormatTools.VCS_REVISION);
+        log.info("Listen on port " + portNumber);
+
+        try (ServerSocket serverSocket = new ServerSocket(portNumber)) {
+            while (true) {
+                RequestHandler w = new RequestHandler(serverSocket.accept());
+                Thread t = new Thread(w);
+                t.start();
             }
         } catch (IOException e) {
-            LOGGER.error("in or out failed");
+            log.error("Exception caught when trying to listen on port "
+                    + portNumber + " or listening for a connection");
+            log.error(e.getMessage());
         }
     }
 }

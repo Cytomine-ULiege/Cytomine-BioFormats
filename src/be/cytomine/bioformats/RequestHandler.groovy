@@ -1,6 +1,8 @@
+package be.cytomine.bioformats
+
 /*
  * Application based on the OME-BIOFORMATS C++ library for image IO.
- * Copyright © 2006 - 2014 Open Microscopy Environment:
+ * Copyright © 2006 - 2019 Open Microscopy Environment:
  *   - Massachusetts Institute of Technology
  *   - National Institutes of Health
  *   - University of Dundee
@@ -33,8 +35,44 @@
  * policies, either expressed or implied, of any organization.
  */
 
-public class FormatException extends Exception {
-    public FormatException(String message) {
-        super(message);
+import be.cytomine.bioformats.worker.Worker
+
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+class RequestHandler implements Runnable {
+    private static final Logger log = LoggerFactory.getLogger(RequestHandler.class)
+
+    private Socket client
+
+    RequestHandler(Socket client) {
+        this.client = client
+    }
+
+    void run() {
+        log.info("Run request handler")
+        try {
+            BufferedReader input = new BufferedReader(new InputStreamReader(client.getInputStream()))
+            PrintWriter output = new PrintWriter(client.getOutputStream(), true)
+            String inputLine, outputLine
+
+            while ((inputLine = input.readLine()) != null) {
+                try {
+                    log.info("Received input $inputLine")
+                    Worker w = CommunicationProtocol.getWorkerFromInput(inputLine)
+
+                    w.process()
+
+                    outputLine = CommunicationProtocol.getOutput(w)
+                    log.info("Return: " + outputLine)
+                }
+                catch(Exception e) {
+                    outputLine = CommunicationProtocol.getOutput(e)
+                }
+                output.println(outputLine)
+            }
+        } catch (IOException e) {
+            log.error("IO Exception in request handler")
+        }
     }
 }

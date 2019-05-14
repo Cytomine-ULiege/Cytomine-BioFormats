@@ -1,3 +1,5 @@
+package be.cytomine.bioformats.worker
+
 /*
  * Application based on the OME-BIOFORMATS C++ library for image IO.
  * Copyright © 2006 - 2019 Open Microscopy Environment:
@@ -33,41 +35,19 @@
  * policies, either expressed or implied, of any organization.
  */
 
-import loci.formats.FormatTools;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+class Identifier extends Worker {
 
-import java.io.IOException;
-import java.net.ServerSocket;
+    public Identifier(def file) {
+        this.file = file;
+    }
 
-public class BioFormatServerSocket {
-    private static final Logger LOGGER = LoggerFactory.getLogger(BioFormatServerSocket.class);
+    @Override
+    def process() {
+        return null
+    }
 
-    public static void main(String[] args) {
-
-        if (args.length != 1) {
-            LOGGER.error("Usage: java BioFormat <port number>");
-            System.exit(1);
-        }
-
-        int portNumber = Integer.parseInt(args[0]);
-
-        LOGGER.info("Use BioFormats " + FormatTools.VERSION);
-        LOGGER.info("Version date: " + FormatTools.DATE);
-        LOGGER.info("Last commit: " + FormatTools.VCS_REVISION);
-        LOGGER.info("Listen on port " + portNumber);
-
-        try (ServerSocket serverSocket = new ServerSocket(portNumber)) {
-            while (true) {
-                ClientWorker w;
-                w = new ClientWorker(serverSocket.accept());
-                Thread t = new Thread(w);
-                t.start();
-            }
-        } catch (IOException e) {
-            LOGGER.error("Exception caught when trying to listen on port "
-                    + portNumber + " or listening for a connection");
-            LOGGER.error(e.getMessage());
-        }
+    @Override
+    def getOutput() {
+        return null
     }
 }

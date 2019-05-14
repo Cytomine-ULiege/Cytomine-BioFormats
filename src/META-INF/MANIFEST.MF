@@ -12,5 +12,5 @@ Class-Path: bioformats_package.jar xstream-1.4.10.jar qdox-1.12.1.jar
  .12.jar testng-6.8.13.jar multiverse-core-0.7.0.jar ant-antlr-1.9.4.j
  ar jsr166y-1.7.0.jar commons-logging-1.2.jar groovy-servlet-2.4.15.ja
  r groovy-json-2.4.15.jar groovy-nio-2.4.15.jar
-Main-Class: BioFormatServerSocket
+Main-Class: be.cytomine.bioformats.BioFormatServerSocket
 
