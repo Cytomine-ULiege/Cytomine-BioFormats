@@ -1,0 +1,57 @@
+sudo: required
+
+services:
+  - docker
+
+language: java
+
+jdk:
+  - oraclejdk8
+
+env:
+  global:
+  - DOCKER_USERNAME=cytomineulg
+  - secure: w3hmcKFKmJtUl5/nBW1SOlDj2MxdNdqufGJPx565O9VQgYnX9tw9qfcl7W6KN/5947oXzgR6g905d73y72EYGF0N7qCZmnwhvr1h4of+khLdK1uQCU7r0vAsZoX6nrLYbWTGBjQCXPM7Er/5xWElwIDoapRz+dymwRqm+8CcRSuaiTz0LlRGUxOtIXjXhwPsb3v8CaUDfHKgmpzDQDL7SUsGtCLmd+aWMV3tnvGoyuhfTTMUL71XjfLUIUIfg2JVk8gUWbz8wkRRvPCE0XxvWSopaUXLFGUd0rmpFFXD3hkHJPkiPjH/H00Pjki113pwrCxPXBZ7MDfkvN+Tmts6D4zUwUcEcRxxtb/Aw7q/8zenJcrKMqOGOLxMsMdua3eV4Q/i8EI/BUQcvq4BoBgQ0GSqhs+6gUrYi1mpSbI5xPtaNKrNRP1/hyGwSUTgKGtUjI+suvp+1WcEUlKkjX/VtLjeUBL/Q3+mwPAxBlbErS1kD4Yiheu4xmovZvgw1eNJaAdp8BC48sI1708Y3mZJej9jv2/leFOrS8LyLgvRtVxm2SZKfirAtClPToNoQJFuWsjGh3poZ0aBM7ceL+jAPAL5kjC9y0L4hJ9fQ/Yo4BT+WNaMbU858HVeEE1s0PLGLDvPhjTacbKe3da7ZLxvQzz2M/kPoSkMFHD9ebnk9iQ=
+
+script: true
+
+after_success:
+  - git fetch --tags
+  - export VERSION=$(cat application.properties | grep app.version=)
+  - export VERSION=${VERSION#app.version=}
+  - export DEPLOY=false
+  - >
+    if [[ ! $(git tag -l v$VERSION) ]]; then
+    git config --local user.name "$(git log -1 --pretty=format:'%an')";
+    git config --local user.email "$(git log -1 --pretty=format:'%ae')";
+    git tag "v$VERSION";
+    export DEPLOY=true;
+    echo "Deploy with version $VERSION";
+
+    javac jar TODO ;
+    cp cytomine-bioformats-wrapper.jar docker/;
+    docker build --build-arg RELEASE_PATH="." --build-arg FROM_NAMESPACE=cytomineuliege --build-arg FROM_VERSION=v1.2.0 -t cytomineuliege/bioformat:latest -t cytomineuliege/bioformat:v$VERSION docker/ fi;
+
+deploy:
+  - provider: script
+    script: >
+      echo $VERSION &&
+      docker login -u "$DOCKER_USERNAME" -p $"DOCKER_PASSWORD' &&
+      docker push cytomineuliege/bioformat:v$VERSION &&
+      echo "Done."
+    skip_cleanup: true
+    on:
+      condition: $DEPLOY = true
+  - provider: releases
+    api_key:
+      secure: TPQa8EpiTwijPQUjMvJuo1QrkpDrBOxwmkGsJ4A7L+8JhAs2c9OVs3iyPwlxwrUHgglC3kOGq0HVtY7vZrBY/FTCeKuKFjCEjsDHeioulYDFK4oV55vQQeLks65Xr1gbXE42TnzluGjsREAMOjywf4JhyhqmKC424YGtY2ZOuaAbHSNOtzl6I9rwnezXSSY3Kzdudo9zS0pq+L4QUHxRYh50hHdv/vyhaEpMCZiIowtXign348PdkRRjmGwQKlPB6L0oY+lbxA35vTb+WALOmrNLbyyG55WnjXSWnL3cn8KDmllLcNmhzXDldsDGPph2fTP65XieVRuUqvTb38837JhlDe9nvz5Msd9JNlMP04vxKcGhZnVoPUVPfRmZCItzeOrvwOUt1V99BJ4uJeQVxR0W2ZcJ9KvC4UbBG1+FNBMpB+jqZg76aQqTLJjJHRXbTGj/wskGR0Gw/yvjZCyydCeMWVNPp8i+NHmh+RQu69DkYfRzoVi5EynutyIzY3OkZZ4N8lezN3nUNxRghOBZXc6wSJdhJpMmIigvjKqxBZONZ3u3qpH/JashQkTNZLfS2vsQ0Uzz4of24QysQ7rm9yTS3ZyCB5GU11P82Hm2SzScVf+OiQFGjLpb19jk+t9SPMyY23cpvT5s38HIY5wWGceb7NcQtwI1ycOVd7HnoZ0=
+    file:
+      - cytomine-bioformats-wrapper.jar
+    skip_cleanup: true
+    on:
+      condition: $DEPLOY = true
+
+notifications:
+  email: false
+  slack:
+    secure: TrdyGx56LOXEzrMxZgMhnYwpLQjIX3fL40YYujq40W66Rcis6nm2SP4i0By3fOSwwKcRwP8HXvs219sZddL3KJSZ0ormMvLHVjo9NNEbUAHqWVUBnaNJjF6ANmRFpuIKkVRTu2LQHaJhjMFyrKg8VVRAxNR1keaOsVeb4/U6gLF9LqfMciz56TtoDzfbMfB0V7l+RtUfRpeKGjDqp+lAEIzueSRItK49hP4gACGxJEMACIG+z1PZNLtVTnV6DokqnVmhUBIo9+ikLmU8g48Ark6hmj0JC5zZHK+LwZUhlMeJmPsJMydJ0ZPiOzcdPhQoLZC5looGFYPru2Igu3GTIM/hoTCDIYUCYRStr0vRF4niEEWMXKp9NJUQHkK0RwPCsuc0iwl1Jaeh9+qSEUeEW3tYyRgNwBPI4YK/XFt1/oDHufi8xU50xVTysSOxVJWbZ29OVdJ4LtWrF5rdKiFfl54sAqEnVREp8QcvRFXLMwL89cW5omi4xqmlojLm1pS/6DthlrED7dMz8qQi43shOPQbVqA+TRRUXl7jPo4DNTbI/8KfJGXg76scytZB4qUx4t6j2C9YxllHEZf7nlNyvHQzTLrcNOB6kxYFOibdrWIm1TycpbIBkb3l/1ZP0MgVFLpEu89eYcCpk29g6QkdyMU6Pb69avq4c9HUk0WhGME=
