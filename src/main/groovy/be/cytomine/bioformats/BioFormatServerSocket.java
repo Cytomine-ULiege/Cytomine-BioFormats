@@ -47,12 +47,10 @@ public class BioFormatServerSocket {
 
     public static void main(String[] args) {
 
-        if (args.length != 1) {
-            log.error("Usage: java BioFormat <port number>");
-            System.exit(1);
+        int portNumber = 4321;
+        if (args.length >= 1) {
+            portNumber = Integer.parseInt(args[0]);
         }
-
-        int portNumber = Integer.parseInt(args[0]);
 
         log.info("Use BioFormats " + FormatTools.VERSION);
         log.info("Version date: " + FormatTools.DATE);

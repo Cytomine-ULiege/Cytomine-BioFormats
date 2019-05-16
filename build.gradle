@@ -1,0 +1,34 @@
+plugins {
+    id 'groovy'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '5.0.0'
+    id 'java'
+}
+
+group 'be.cytomine.bioformats'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'lib')
+    compile 'org.codehaus.groovy:groovy-all:2.3.11'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+run {
+    mainClassName = 'be.cytomine.bioformats.BioFormatServerSocket'
+}
+
+jar {
+    manifest {
+        attributes('Main-Class': 'be.cytomine.bioformats.BioFormatServerSocket')
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
