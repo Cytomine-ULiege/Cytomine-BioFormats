@@ -11,7 +11,7 @@ jdk:
 env:
   global:
   - DOCKER_USERNAME=cytomineulg
-  - secure: w3hmcKFKmJtUl5/nBW1SOlDj2MxdNdqufGJPx565O9VQgYnX9tw9qfcl7W6KN/5947oXzgR6g905d73y72EYGF0N7qCZmnwhvr1h4of+khLdK1uQCU7r0vAsZoX6nrLYbWTGBjQCXPM7Er/5xWElwIDoapRz+dymwRqm+8CcRSuaiTz0LlRGUxOtIXjXhwPsb3v8CaUDfHKgmpzDQDL7SUsGtCLmd+aWMV3tnvGoyuhfTTMUL71XjfLUIUIfg2JVk8gUWbz8wkRRvPCE0XxvWSopaUXLFGUd0rmpFFXD3hkHJPkiPjH/H00Pjki113pwrCxPXBZ7MDfkvN+Tmts6D4zUwUcEcRxxtb/Aw7q/8zenJcrKMqOGOLxMsMdua3eV4Q/i8EI/BUQcvq4BoBgQ0GSqhs+6gUrYi1mpSbI5xPtaNKrNRP1/hyGwSUTgKGtUjI+suvp+1WcEUlKkjX/VtLjeUBL/Q3+mwPAxBlbErS1kD4Yiheu4xmovZvgw1eNJaAdp8BC48sI1708Y3mZJej9jv2/leFOrS8LyLgvRtVxm2SZKfirAtClPToNoQJFuWsjGh3poZ0aBM7ceL+jAPAL5kjC9y0L4hJ9fQ/Yo4BT+WNaMbU858HVeEE1s0PLGLDvPhjTacbKe3da7ZLxvQzz2M/kPoSkMFHD9ebnk9iQ=
+  - secure: "ayBiBrJYyS/UodG18hyngV2DN3XZWqLver3EPd/JVeSv2U18pNO2zkA3d1GKy65OBHQ5QTNnr+8u7HfjMBoyZboFM9wXfJrVzqJVL+xpRY7DL9xedX3EQSYByppLHDLUYbyd+W8fd1eBOCe90YfWBBXHPWYksUxTTx6b2izgUFeZWXQBODWaSQKUmegjzJsg0mgVX6KwIQx2fstethoZhJI6Rr8VqvksMYpb4KRE1IFWnkZvimYgsodwar5HAoi49cm6UhnP7szxUiryr8JS3K1AMufOVRJaL4bh6I2XjygSt8c/V8ywhokztXeuouQLdsXCVN63fDfdg1z5dDwq4S05yiVsii+4bte/cXjyCk+cUi1jxaUQUzTMTcTWs8WNoPFBrBc8TZg7g8DktqOu0dNL9x6nCQ5ksd/b+/oG60Me5scIKXGMI+ce5+m5rJg4BBqOD2TkbuhAD3PC743ikk0p5ClWbB2UVihxA82m2ZCP3UxJdbsOzCN51PEnJa0JWfN8b+6r0XHoAQB7EAGIeZanwDXHh03zQeNtgxE+tNGvAJW4UnkgJJY3m3yM332KO6Kdx63WfL+YYDb6ZgcvHORmutqB90SQXjZhzYV56+chzd22KA6gOL7CLPqnJxcZjHMG/3yFhKoIjbnj02wbNmI8Pi2xSERxssA0L5TEg4E="
 
 script: true
 
@@ -21,16 +21,16 @@ after_success:
   - export DEPLOY=false
   - >
     if [[ ! $(git tag -l v$VERSION) ]]; then
-    git config --local user.name "$(git log -1 --pretty=format:'%an')";
-    git config --local user.email "$(git log -1 --pretty=format:'%ae')";
-    git tag "v$VERSION";
-    export DEPLOY=true;
-    echo "Deploy with version $VERSION";
-
-    ./gradlew jar;
-    mv build/libs/cytomine-bioformats-wrapper-$VERSION.jar cytomine-bioformats-wrapper.jar;
-    cp cytomine-bioformats-wrapper.jar docker/;
-    docker build --build-arg RELEASE_PATH="." --build-arg FROM_NAMESPACE=cytomineuliege --build-arg FROM_VERSION=v1.2.0 -t cytomineuliege/bioformat:latest -t cytomineuliege/bioformat:v$VERSION docker/ fi;
+      git config --local user.name "$(git log -1 --pretty=format:'%an')";
+      git config --local user.email "$(git log -1 --pretty=format:'%ae')";
+      git tag "v$VERSION";
+      export DEPLOY=true;
+      echo "Deploy with version $VERSION";
+      ./gradlew jar;
+      mv build/libs/cytomine-bioformats-wrapper-$VERSION.jar cytomine-bioformats-wrapper.jar;
+      cp cytomine-bioformats-wrapper.jar docker/;
+      docker build --build-arg RELEASE_PATH="." --build-arg FROM_NAMESPACE=cytomineuliege --build-arg FROM_VERSION=v1.2.0 -t cytomineuliege/bioformat:latest -t cytomineuliege/bioformat:v$VERSION docker/
+    fi;
 
 deploy:
   - provider: script
