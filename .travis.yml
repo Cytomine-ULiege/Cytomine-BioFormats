@@ -17,8 +17,7 @@ script: true
 
 after_success:
   - git fetch --tags
-  - export VERSION=$(cat application.properties | grep app.version=)
-  - export VERSION=${VERSION#app.version=}
+  - export VERSION=$(gradle properties -q | grep "version:" | awk '{print $2}' | tr -d '[:space:]')
   - export DEPLOY=false
   - >
     if [[ ! $(git tag -l v$VERSION) ]]; then
@@ -28,7 +27,7 @@ after_success:
     export DEPLOY=true;
     echo "Deploy with version $VERSION";
 
-    javac jar TODO ;
+    ./gradlew jar;
     cp cytomine-bioformats-wrapper.jar docker/;
     docker build --build-arg RELEASE_PATH="." --build-arg FROM_NAMESPACE=cytomineuliege --build-arg FROM_VERSION=v1.2.0 -t cytomineuliege/bioformat:latest -t cytomineuliege/bioformat:v$VERSION docker/ fi;
 
