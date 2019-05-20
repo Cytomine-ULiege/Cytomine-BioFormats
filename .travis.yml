@@ -36,7 +36,7 @@ deploy:
   - provider: script
     script: >
       echo $VERSION &&
-      docker login -u "$DOCKER_USERNAME" -p $"DOCKER_PASSWORD' &&
+      docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" &&
       docker push cytomineuliege/bioformat:v$VERSION &&
       echo "Done."
     skip_cleanup: true
