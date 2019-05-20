@@ -35,15 +35,28 @@ package be.cytomine.bioformats;
  * policies, either expressed or implied, of any organization.
  */
 
-import loci.formats.FormatTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 public class BioFormatServerSocket {
     private static final Logger log = LoggerFactory.getLogger(BioFormatServerSocket.class);
+
+    private void printBioFormatsInfo() {
+        try {
+            Manifest mf = new Manifest(getClass().getClassLoader().getResourceAsStream("bioformats.mf"));
+            Attributes attributes = mf.getMainAttributes();
+            log.info("Use BioFormats " + attributes.getValue("Implementation-Version"));
+            log.info("Version date: " + attributes.getValue("Implementation-Date"));
+            log.info("Last commit on BioFormats repo: " + attributes.getValue("Implementation-Build"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static void main(String[] args) {
 
@@ -52,9 +65,9 @@ public class BioFormatServerSocket {
             portNumber = Integer.parseInt(args[0]);
         }
 
-        log.info("Use BioFormats " + FormatTools.VERSION);
-        log.info("Version date: " + FormatTools.DATE);
-        log.info("Last commit: " + FormatTools.VCS_REVISION);
+        BioFormatServerSocket main = new BioFormatServerSocket();
+        main.printBioFormatsInfo();
+
         log.info("Listen on port " + portNumber);
 
         try (ServerSocket serverSocket = new ServerSocket(portNumber)) {
