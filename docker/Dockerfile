@@ -16,10 +16,19 @@ ARG FROM_NAMESPACE
 ARG FROM_VERSION
 FROM ${FROM_NAMESPACE}/java8:$FROM_VERSION
 
+ENV BIOFORMAT_PORT 4321
+
+RUN apt-get -y update && \
+    apt-get install -y \
+      cron \
+      rsyslog && \
+    rm -rf /var/lib/apt/lists/*
+
 ARG VERSION
 ARG NAMESPACE=Cytomine-ULiege
 ARG RELEASE_PATH=https://github.com/${NAMESPACE}/Cytomine-BioFormats/release/download/v${VERSION}
 ADD ${RELEASE_PATH}/cytomine-bioformats-wrapper.jar /tmp/cytomine-bioformats-wrapper.jar
+RUN chmod +x /tmp/cytomine-bioformats-wrapper.jar
 
 COPY check-status.sh /tmp/check-status.sh
 RUN chmod +x /tmp/check-status.sh

@@ -14,13 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-java -jar cytomine-bioformats-wrapper.jar $BIOFORMAT_PORT > /tmp/log &
+java -jar /tmp/cytomine-bioformats-wrapper.jar $BIOFORMAT_PORT > /tmp/log &
 
 touch /tmp/crontab
-
-echo "#Setting env var" >> /tmp/crontab
 echo "BIOFORMAT_PORT=$BIOFORMAT_PORT" >> /tmp/crontab
-echo "#End setting env var" >> /tmp/crontab
 echo "*/1 * * * * /bin/bash /tmp/check-status.sh $BIOFORMAT_PORT >> /tmp/cron.out" >> /tmp/crontab
 crontab /tmp/crontab
 rm /tmp/crontab

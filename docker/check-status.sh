@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-COUNT=$(ps aux | grep "java -jar cytomine-bioformats-wrapper.jar" | grep -v grep | wc -l)
+COUNT=$(ps aux | grep "java -jar /tmp/cytomine-bioformats-wrapper.jar" | grep -v grep | wc -l)
 if [ $COUNT -lt 1 ]; then
     echo "$COUNT / 1 on $(date)"
-    java -jar cytomine-bioformats-wrapper.jar $1
+    java -jar /tmp/cytomine-bioformats-wrapper.jar $1 > /tmp/log &
 fi;
