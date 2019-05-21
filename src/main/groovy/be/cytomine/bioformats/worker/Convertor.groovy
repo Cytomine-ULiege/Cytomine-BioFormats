@@ -75,6 +75,8 @@ class Convertor extends Worker {
         File parentDirectory = file.parentFile
         File targetDirectory = new File(parentDirectory, "conversion")
         targetDirectory.mkdirs()
+        targetDirectory.setReadable(true, false)
+        targetDirectory.setWritable(true, false)
 
         String basePath = removeExtension(file.absolutePath - file.parent)
         def dimensionPattern = (group && imageCount > 1) ? "_Z%z_C%c_T%t" : ""
