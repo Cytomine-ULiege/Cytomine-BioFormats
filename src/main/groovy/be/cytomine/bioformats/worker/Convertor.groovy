@@ -94,6 +94,7 @@ class Convertor extends Worker {
         args << "256"
         args << "-tiley"
         args << "256"
+        args << "-no-upgrade"
         args << target.getAbsolutePath()
 
         ImageConverter ic = new ImageConverter()
