@@ -102,9 +102,15 @@ class PropertyExtractor extends Worker {
         }
         catch(Exception ignored) {}
 
-        def bps = null
+        def spp = null
         try {
-            bps = meta.getPixelsSignificantBits(biggestSeries).value
+            spp = meta.getChannelSamplesPerPixel(biggestSeries, 0).value
+        }
+        catch (Exception ignored) {}
+
+        def date = null
+        try {
+            date = meta.getImageAcquisitionDate(biggestSeries).value
         }
         catch (Exception ignored) {}
 
@@ -115,7 +121,7 @@ class PropertyExtractor extends Worker {
                 'Bioformats.Pixels.SizeC': reader.getSizeC(),
                 'Bioformats.Pixels.SizeT': reader.getSizeT(),
                 'Bioformats.Pixels.BitsPerPixel': reader.getBitsPerPixel(),
-                'Bioformats.Pixels.SignificantBits': bps,
+                'Bioformats.Pixels.SamplesPerPixel': spp,
                 'Bioformats.Pixels.PhysicalSizeX': physicalSizeX?.value(UNITS.MICROMETER),
                 'Bioformats.Pixels.PhysicalSizeXUnit': (physicalSizeX) ? "µm" : null,
                 'Bioformats.Pixels.PhysicalSizeY': physicalSizeY?.value(UNITS.MICROMETER),
@@ -125,7 +131,7 @@ class PropertyExtractor extends Worker {
                 'Bioformats.Pixels.TimeIncrement': timeIncrement?.value(UNITS.SECOND),
                 'Bioformats.Pixels.TimeIncrementUnit': (timeIncrement) ? 's' : null,
                 'Bioformats.Objective.NominalMagnification': magnification,
-                'Bioformats.Image.AcquisitionDate': meta.getImageAcquisitionDate(biggestSeries).value
+                'Bioformats.Image.AcquisitionDate': date
         ]
 
         if (includeRaw) {
