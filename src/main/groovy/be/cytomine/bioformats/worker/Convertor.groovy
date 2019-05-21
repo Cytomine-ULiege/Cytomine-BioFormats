@@ -36,7 +36,7 @@ package be.cytomine.bioformats.worker
  */
 
 import be.cytomine.bioformats.BioFormatsUtils
-
+import be.cytomine.bioformats.FormatException
 import loci.common.DebugTools
 import loci.formats.ImageReader
 import loci.formats.ImageWriter
@@ -97,8 +97,9 @@ class Convertor extends Worker {
         ImageConverter ic = new ImageConverter()
         def success = ic.testConvert(new ImageWriter(), (String[]) args.toArray())
 
-        if (!success)
-            return null
+        if (!success) {
+            throw new FormatException("Error during conversion by BioFormats")
+        }
 
         Pattern p = Pattern.compile("\\d+")
 

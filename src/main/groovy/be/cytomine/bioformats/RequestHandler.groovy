@@ -68,6 +68,7 @@ class RequestHandler implements Runnable {
                 }
                 catch(Exception e) {
                     outputLine = CommunicationProtocol.getOutput(e)
+                    log.error("Error: " + outputLine)
                 }
                 output.println(outputLine)
             }
