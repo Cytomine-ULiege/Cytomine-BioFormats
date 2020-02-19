@@ -89,7 +89,7 @@ class Convertor extends Worker {
         args << "$serieNumber".toString()
         args << "-compression"
         args << "LZW"
-        args << "-bigtiff"
+        //args << "-bigtiff"
         args << "-tilex"
         args << "256"
         args << "-tiley"
