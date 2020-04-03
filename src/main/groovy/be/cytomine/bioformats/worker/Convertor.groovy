@@ -82,14 +82,13 @@ class Convertor extends Worker {
         def dimensionPattern = (group && imageCount > 1) ? "_Z%z_C%c_T%t" : ""
 
         File target = new File(targetDirectory, "${basePath}${dimensionPattern}.tiff")
-
         ArrayList<String> args = []
         args << file.absolutePath
         args << "-series"
         args << "$serieNumber".toString()
         args << "-compression"
         args << "LZW"
-        args << "-bigtiff"
+        //args << "-bigtiff"
         args << "-tilex"
         args << "256"
         args << "-tiley"
@@ -99,7 +98,6 @@ class Convertor extends Worker {
 
         ImageConverter ic = new ImageConverter()
         def success = ic.testConvert(new ImageWriter(), (String[]) args.toArray())
-
         if (!success) {
             throw new FormatException("Error during conversion by BioFormats")
         }
