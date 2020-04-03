@@ -1,9 +1,28 @@
 <component name="libraryTable">
   <library name="bioformats_package">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/bioformats_package.jar!/" />
+      <root url="jar://$USER_HOME$/Documents/Outils/bioformats_packageNEW.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/bioformats_package.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../bioformats/components/bio-formats-plugins/src" />
+      <root url="file://$PROJECT_DIR$/../bioformats/components/bio-formats-plugins/test" />
+      <root url="file://$PROJECT_DIR$/../bioformats/components/bio-formats-plugins/utils" />
+      <root url="file://$PROJECT_DIR$/../bioformats/components/bio-formats-tools/src" />
+      <root url="file://$PROJECT_DIR$/../bioformats/components/bio-formats-tools/test" />
+      <root url="file://$PROJECT_DIR$/../bioformats/components/forks/turbojpeg/src" />
+      <root url="file://$PROJECT_DIR$/../bioformats/components/formats-api/src" />
+      <root url="file://$PROJECT_DIR$/../bioformats/components/formats-api/test" />
+      <root url="file://$PROJECT_DIR$/../bioformats/components/formats-bsd/src" />
+      <root url="file://$PROJECT_DIR$/../bioformats/components/formats-bsd/test" />
+      <root url="file://$PROJECT_DIR$/../bioformats/components/formats-bsd/utils/mipav" />
+      <root url="file://$PROJECT_DIR$/../bioformats/components/formats-gpl/src" />
+      <root url="file://$PROJECT_DIR$/../bioformats/components/formats-gpl/test" />
+      <root url="file://$PROJECT_DIR$/../bioformats/components/formats-gpl/utils" />
+      <root url="file://$PROJECT_DIR$/../bioformats/components/test-suite/src" />
+      <root url="file://$PROJECT_DIR$/../bioformats/components/test-suite/test" />
+      <root url="file://$PROJECT_DIR$/../bioformats/components/test-suite/utils" />
+    </SOURCES>
   </library>
 </component>

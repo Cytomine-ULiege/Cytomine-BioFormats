@@ -77,19 +77,18 @@ class Convertor extends Worker {
         targetDirectory.mkdirs()
         targetDirectory.setReadable(true, false)
         targetDirectory.setWritable(true, false)
-
+        log.info("TZZZZZZZZZZZZZZZZZZZJGKRGKRJGRJGRG")
         String basePath = removeExtension(file.absolutePath - file.parent)
         def dimensionPattern = (group && imageCount > 1) ? "_Z%z_C%c_T%t" : ""
 
         File target = new File(targetDirectory, "${basePath}${dimensionPattern}.tiff")
-
-        ArrayList<String> args = []
-        args << file.absolutePath
+        ArrayList<String> args=[]
+        args<<file.absolutePath
         args << "-series"
         args << "$serieNumber".toString()
         args << "-compression"
         args << "LZW"
-        args << "-bigtiff"
+        //args << "-bigtiff"
         args << "-tilex"
         args << "256"
         args << "-tiley"
@@ -97,9 +96,11 @@ class Convertor extends Worker {
         args << "-no-upgrade"
         args << target.getAbsolutePath()
 
+        log.info("TZZZZZZZZZZZZZZZZZZZJGKRGKRJGRJGRG")
         ImageConverter ic = new ImageConverter()
-        def success = ic.testConvert(new ImageWriter(), (String[]) args.toArray())
 
+        def success = ic.testConvert(new ImageWriter(), (String[]) args.toArray())
+        log.info( "QUOIIIIIIII $success")
         if (!success) {
             throw new FormatException("Error during conversion by BioFormats")
         }
