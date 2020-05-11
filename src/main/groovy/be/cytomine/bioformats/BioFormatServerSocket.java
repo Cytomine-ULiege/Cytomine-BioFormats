@@ -39,20 +39,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ServerSocket;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
+import java.util.Properties;
 
 public class BioFormatServerSocket {
     private static final Logger log = LoggerFactory.getLogger(BioFormatServerSocket.class);
 
     private void printBioFormatsInfo() {
+        InputStream is;
         try {
-            Manifest mf = new Manifest(getClass().getClassLoader().getResourceAsStream("bioformats.mf"));
-            Attributes attributes = mf.getMainAttributes();
-            log.info("Use BioFormats " + attributes.getValue("Implementation-Version"));
-            log.info("Version date: " + attributes.getValue("Implementation-Date"));
-            log.info("Last commit on BioFormats repo: " + attributes.getValue("Implementation-Build"));
+            is = getClass().getClassLoader().getResourceAsStream("bioformats.properties");
+            Properties props = new Properties();
+            props.load(is);
+            log.info("Use BioFormats " + props.getProperty("Bioformats-Version"));
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -11,11 +11,17 @@ sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    maven {
+        url 'https://artifacts.openmicroscopy.org/artifactory/maven/'
+    }
 }
 
+def bioformatsVersion = '6.5.0'
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'lib')
     compile 'org.codehaus.groovy:groovy-all:2.3.11'
+    compile "ome:formats-gpl:${bioformatsVersion}"
+    compile "ome:bio-formats-tools:${bioformatsVersion}"
+    compile 'org.slf4j:slf4j-api:1.7.6'
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
@@ -27,13 +33,10 @@ sourceSets {
     }
 }
 
-task makeBioFormatsResource(type: Copy) {
-    outputs.upToDateWhen { false }
-    from(zipTree("lib/bioformats_package.jar") + "META-INF") {
-        include "MANIFEST.MF"
-    }
-    into "src/main/resources"
-    rename "MANIFEST.MF", "bioformats.mf"
+
+task makeBioFormatsResource(type: WriteProperties) {
+    outputFile = file("src/main/resources/bioformats.properties")
+    property("Bioformats-Version", bioformatsVersion)
 }
 
 compileJava {
