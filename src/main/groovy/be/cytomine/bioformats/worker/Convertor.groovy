@@ -37,10 +37,10 @@ package be.cytomine.bioformats.worker
 
 import be.cytomine.bioformats.BioFormatsUtils
 import be.cytomine.bioformats.FormatException
+import be.cytomine.bioformats.ImageConverter
 import loci.common.DebugTools
 import loci.formats.ImageReader
 import loci.formats.ImageWriter
-import loci.formats.tools.ImageConverter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -96,11 +96,14 @@ class Convertor extends Worker {
         args << "-no-upgrade"
         args << target.getAbsolutePath()
 
-        ImageConverter ic = new ImageConverter()
-        def success = ic.testConvert(new ImageWriter(), (String[]) args.toArray())
-        if (!success) {
-            throw new FormatException("Error during conversion by BioFormats")
-        }
+//        ImageConverter ic = new ImageConverter()
+//        def success = ic.testConvert(new ImageWriter(), (String[]) args.toArray())
+//        if (!success) {
+//            throw new FormatException("Error during conversion by BioFormats")
+//        }
+        ImageConverter ic = new ImageConverter(file, target.getAbsolutePath(), serieNumber)
+        ic.convert()
+
 
         Pattern p = Pattern.compile("\\d+")
 
