@@ -36,16 +36,13 @@ package be.cytomine.bioformats.worker
  */
 
 import be.cytomine.bioformats.BioFormatsUtils
+import be.cytomine.bioformats.CytomineFile
 import be.cytomine.bioformats.FormatException
 import be.cytomine.bioformats.ImageConverter
 import loci.common.DebugTools
 import loci.formats.ImageReader
-import loci.formats.ImageWriter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 
 class Convertor extends Worker {
     private static final Logger log = LoggerFactory.getLogger(Convertor.class)
@@ -68,9 +65,6 @@ class Convertor extends Worker {
         reader.setId(file.absolutePath)
 
         def serieNumber = (onlyBiggestSerie) ? BioFormatsUtils.getBiggestSeries(reader) : -1
-        def imageCount = reader.getImageCount()
-
-        def results = []
 
         File parentDirectory = file.parentFile
         File targetDirectory = new File(parentDirectory, "conversion")
@@ -78,45 +72,14 @@ class Convertor extends Worker {
         targetDirectory.setReadable(true, false)
         targetDirectory.setWritable(true, false)
 
-        String basePath = removeExtension(file.absolutePath - file.parent)
-        def dimensionPattern = (group && imageCount > 1) ? "_Z%z_C%c_T%t" : ""
-
-        File target = new File(targetDirectory, "${basePath}${dimensionPattern}.tiff")
-        ArrayList<String> args = []
-        args << file.absolutePath
-        args << "-series"
-        args << "$serieNumber".toString()
-        args << "-compression"
-        args << "LZW"
-        //args << "-bigtiff"
-        args << "-tilex"
-        args << "256"
-        args << "-tiley"
-        args << "256"
-        args << "-no-upgrade"
-        args << target.getAbsolutePath()
-
-//        ImageConverter ic = new ImageConverter()
-//        def success = ic.testConvert(new ImageWriter(), (String[]) args.toArray())
-//        if (!success) {
-//            throw new FormatException("Error during conversion by BioFormats")
-//        }
-        ImageConverter ic = new ImageConverter(file, target.getAbsolutePath(), serieNumber)
-        ic.convert()
-
-
-        Pattern p = Pattern.compile("\\d+")
-
-        def convertedFiles = targetDirectory.listFiles()
-        convertedFiles.each { file ->
-            def dimensions = file.absolutePath - basePath - targetDirectory
-            Matcher m = p.matcher(dimensions)
-            results.add([
-                    path: file.absolutePath,
-                    z: (m.find()) ? m.group() : 0,
-                    c: (m.find()) ? m.group() : 0,
-                    t: (m.find()) ? m.group() : 0,
-            ])
+        ImageConverter ic = new ImageConverter(file, targetDirectory, serieNumber)
+        List<CytomineFile> results = []
+        try {
+            results = ic.convert()
+        }
+        catch (Exception e) {
+            e.printStackTrace()
+            throw new FormatException("Error during conversion by BioFormats")
         }
 
         log.info("conversion result")
@@ -124,18 +87,10 @@ class Convertor extends Worker {
         this.convertedFiles = results
     }
 
-    static private String removeExtension(String file) {
-        if (file.endsWith(".ome.tif"))
-            return file[0..-9]
 
-        if (file.endsWith(".ome.tiff"))
-            return file[0..-10]
-
-        return file.substring(0, file.lastIndexOf("."))
-    }
 
     @Override
     def getOutput() {
-        return [files: convertedFiles]
+        return [files: convertedFiles*.toMap()]
     }
 }

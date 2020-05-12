@@ -56,4 +56,14 @@ class BioFormatsUtils {
 
         return biggestSeries
     }
+
+    static String removeExtension(String file) {
+        if (file.endsWith(".ome.tif"))
+            return file[0..-9]
+
+        if (file.endsWith(".ome.tiff"))
+            return file[0..-10]
+
+        return file.substring(0, file.lastIndexOf("."))
+    }
 }

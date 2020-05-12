@@ -15,6 +15,7 @@ import loci.formats.MetadataTools
 import loci.formats.MissingLibraryException
 import loci.formats.gui.Index16ColorModel
 import loci.formats.in.DynamicMetadataOptions
+import loci.formats.meta.DummyMetadata
 import loci.formats.meta.IMetadata
 import loci.formats.meta.MetadataRetrieve
 import loci.formats.meta.MetadataStore
@@ -26,6 +27,7 @@ import loci.formats.tiff.IFD
 import ome.xml.meta.OMEXMLMetadataRoot
 import ome.xml.model.Image
 import ome.xml.model.Pixels
+import ome.xml.model.enums.DimensionOrder
 import ome.xml.model.primitives.PositiveInteger
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -33,44 +35,47 @@ import org.slf4j.LoggerFactory
 import java.awt.image.IndexColorModel
 
 class ImageConverter {
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger(loci.formats.tools.ImageConverter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(loci.formats.tools.ImageConverter.class)
+    private static final String OUT_PATTERN = "_C%c_Z%z_T%t"
 
     File input
-    def outputs
+    List<CytomineFile> outputs = []
+    String outputPattern
 
     IFormatReader reader
     TiffWriter writer
     String compression = "LZW"
     int tileWidth
     int tileHeight
-
     int series
 
     int width = 0
     int height = 0
+    int xCoordinate = 0
+    int yCoordinate = 0
+    int pyramidScale = 1, pyramidResolutions = 1
+    boolean firstTile = true
 
     DynamicMetadataOptions options = new DynamicMetadataOptions()
     OMEXMLService service
     MetadataStore store
     HashMap<String, Integer> nextOutputIndex = new HashMap<String, Integer>()
-    int xCoordinate = 0
-    int yCoordinate = 0
-    int pyramidScale = 1, pyramidResolutions = 1;
 
-    def firstTile = true
-    def out
-
-    ImageConverter(File input, def out, def series, def tileSize = 256, def compression = "LZW") {
+    ImageConverter(File input, File targetDirectory, def series, def tileSize = 256,
+                   def compression = "LZW") {
         this.input = input
         this.series = series ?: -1
         this.tileWidth = tileSize
         this.tileHeight = tileSize
         this.compression = compression
-        this.out = out
+
+        String basePath = BioFormatsUtils.removeExtension(input.absolutePath - input.parent)
+        this.outputPattern = new File(targetDirectory, "${basePath}${OUT_PATTERN}.tif").absolutePath
     }
 
-    def convert() {
+    List<CytomineFile> convert() {
+        firstTile = true
+        outputs.clear()
         setupReader()
         setupWriter()
 
@@ -79,9 +84,16 @@ class ImageConverter {
         long read = 0, write = 0
         int first = series == -1 ? 0 : series
         int last = series == -1 ? num : series + 1
-        long timeLastLogged = System.currentTimeMillis();
+        long timeLastLogged = System.currentTimeMillis()
         for (int q = first; q < last; q++) {
             reader.setSeries(q)
+            MetadataRetrieve retrieve = store instanceof MetadataRetrieve ?
+                    (MetadataRetrieve) store : new DummyMetadata()
+            DimensionOrder order = retrieve.getPixelsDimensionOrder(q)
+            int sizeC = retrieve.getChannelCount(q)
+            int sizeT = retrieve.getPixelsSizeT(q).getValue()
+            int sizeZ = retrieve.getPixelsSizeZ(q).getValue()
+
             // OutputIndex should be reset at the start of a new series
             nextOutputIndex.clear()
 
@@ -104,8 +116,13 @@ class ImageConverter {
 
                 int count = 0
                 for (int i = startPlane; i < endPlane; i++) {
-                    String outputName = FormatTools.getFilename(q, i, reader, out, false)
+                    String outputName = FormatTools.getFilename(q, i, reader, outputPattern, false)
                     if (outputName == FormatTools.getTileFilename(0, 0, 0, outputName)) {
+                        int[] coordinates = FormatTools.getZCTCoords(order.getValue(), sizeZ, sizeC, sizeT,
+                                sizeZ * sizeC * sizeT, i)
+                        String channelName = retrieve.getChannelName(q, coordinates[1]) ?: coordinates[1]
+                        outputs << new CytomineFile(outputName, coordinates[1], coordinates[0],
+                                coordinates[2], channelName)
                         writer.setId(outputName)
                         if (compression != null) writer.setCompression(compression)
                     }
@@ -146,6 +163,7 @@ class ImageConverter {
             }
         }
         writer.close()
+        return outputs
     }
 
     private def setupWriter() {
@@ -175,7 +193,7 @@ class ImageConverter {
                     meta.setPixelsSizeX(new PositiveInteger(width), 0)
                     meta.setPixelsSizeY(new PositiveInteger(height), 0)
 
-                    setupResolutions(meta);
+                    setupResolutions(meta)
                     writer.setMetadataRetrieve((MetadataRetrieve) meta)
                 } else {
                     for (int i = 0; i < reader.getSeriesCount(); i++) {
@@ -183,7 +201,7 @@ class ImageConverter {
                         meta.setPixelsSizeY(new PositiveInteger(height), i)
                     }
 
-                    setupResolutions(meta);
+                    setupResolutions(meta)
                     writer.setMetadataRetrieve((MetadataRetrieve) meta)
                 }
             }
@@ -247,7 +265,7 @@ class ImageConverter {
             // to convert it one tile at a time
 
             if ((writer instanceof TiffWriter) || ((writer instanceof ImageWriter) &&
-                    (((ImageWriter) writer).getWriter(out) instanceof TiffWriter))) {
+                    (((ImageWriter) writer).getWriter(outputPattern) instanceof TiffWriter))) {
                 return convertTilePlane(writer, index, outputIndex, currentFile)
             }
         }
@@ -363,7 +381,7 @@ class ImageConverter {
                     ((TiffWriter) writer).saveBytes(outputIndex, buf,
                             ifd, outputX, outputY, tileWidth, tileHeight)
                 } else if (writer instanceof ImageWriter) {
-                    IFormatWriter baseWriter = ((ImageWriter) writer).getWriter(out)
+                    IFormatWriter baseWriter = ((ImageWriter) writer).getWriter(outputPattern)
                     if (baseWriter instanceof TiffWriter) {
                         ((TiffWriter) baseWriter).saveBytes(outputIndex, buf, ifd,
                                 outputX, outputY, tileWidth, tileHeight)
