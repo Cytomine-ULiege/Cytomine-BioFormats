@@ -22,10 +22,16 @@ package be.cytomine.bioformats.worker
 
 import be.cytomine.bioformats.BioFormatsUtils
 import loci.common.DebugTools
+import loci.common.services.DependencyException
+import loci.common.services.ServiceException
 import loci.common.services.ServiceFactory
 import loci.formats.ImageReader
-import loci.formats.meta.IMetadata
+import loci.formats.MissingLibraryException
+import loci.formats.meta.DummyMetadata
+import loci.formats.meta.MetadataRetrieve
+import loci.formats.meta.MetadataStore
 import loci.formats.services.OMEXMLService
+import loci.formats.services.OMEXMLServiceImpl
 import ome.units.UNITS
 
 class PropertyExtractor extends Worker {
@@ -48,14 +54,25 @@ class PropertyExtractor extends Worker {
         reader.setOriginalMetadataPopulated(true)
 
         // create OME-XML metadata store
-        ServiceFactory factory = new ServiceFactory()
-        OMEXMLService service = factory.getInstance(OMEXMLService.class)
-        IMetadata meta = service.createOMEXMLMetadata()
-        reader.setMetadataStore(meta)
+        try {
+            ServiceFactory factory = new ServiceFactory()
+            OMEXMLService service = factory.getInstance(OMEXMLService.class)
+            reader.setMetadataStore(service.createOMEXMLMetadata())
+        }
+        catch (DependencyException de) {
+            throw new MissingLibraryException(OMEXMLServiceImpl.NO_OME_XML_MSG, de)
+        }
+        catch (ServiceException se) {
+            throw new loci.formats.FormatException(se)
+        }
 
         reader.setId(file.absolutePath)
         def biggestSeries = BioFormatsUtils.getBiggestSeries(reader)
         reader.setSeries(biggestSeries)
+
+        MetadataStore store = reader.getMetadataStore()
+        MetadataRetrieve meta = store instanceof MetadataRetrieve ?
+                (MetadataRetrieve) store : new DummyMetadata()
 
         def physicalSizeX = null
         try {
@@ -99,6 +116,20 @@ class PropertyExtractor extends Worker {
         }
         catch (Exception ignored) {}
 
+        def channelNames = [:]
+        try {
+            (0..<reader.getSizeC()).each {
+                def channelName = meta.getChannelName(biggestSeries, it)
+                if (!channelName) channelName = meta.getChannelEmissionWavelength(biggestSeries, it)
+                if (channelName != null)
+                    channelNames << [(it): channelName]
+            }
+        }
+        catch (Exception ignored) {}
+        if (channelNames.isEmpty()) {
+            channelNames = null
+        }
+
         def properties = [
                 'Bioformats.Pixels.SizeX': reader.getSizeX(),
                 'Bioformats.Pixels.SizeY': reader.getSizeY(),
@@ -116,7 +147,8 @@ class PropertyExtractor extends Worker {
                 'Bioformats.Pixels.TimeIncrement': timeIncrement?.value(UNITS.SECOND),
                 'Bioformats.Pixels.TimeIncrementUnit': (timeIncrement) ? 's' : null,
                 'Bioformats.Objective.NominalMagnification': magnification,
-                'Bioformats.Image.AcquisitionDate': date
+                'Bioformats.Image.AcquisitionDate': date,
+                'Bioformats.Channels.Name': channelNames
         ]
 
         if (includeRaw) {
