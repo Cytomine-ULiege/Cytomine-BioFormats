@@ -38,6 +38,20 @@ import ome.units.quantity.Length
 
 class PropertyExtractor extends Worker {
 
+    /*
+     * Keywords extracted from, e.g.:
+     * https://github.com/ome/bioformats/blob/develop/components/formats-gpl/src/loci/formats/in/ZeissCZIReader.java#L1344
+     * https://github.com/ome/bioformats/blob/25645389e076a7bd0011e04c4dd8982c0f0614ed/components/formats-gpl/src/loci/formats/in/SVSReader.java#L486
+     * https://github.com/ome/bioformats/blob/25645389e076a7bd0011e04c4dd8982c0f0614ed/components/formats-gpl/src/loci/formats/in/HamamatsuVMSReader.java#L360
+     * https://github.com/ome/bioformats/blob/25645389e076a7bd0011e04c4dd8982c0f0614ed/components/formats-gpl/src/loci/formats/in/LeicaSCNReader.java#L452
+     * https://github.com/ome/bioformats/blob/25645389e076a7bd0011e04c4dd8982c0f0614ed/components/formats-gpl/src/loci/formats/in/NDPIReader.java#L616
+     * https://github.com/ome/bioformats/blob/b68a64959b9f17ceb6b9cb57c15d7b46b56f23ed/components/formats-gpl/src/loci/formats/in/VentanaReader.java#L799
+     *
+     */
+    private static final List<String> THUMB_KEYWORDS = ["thumb", "thumb image", "thumbnail", "thumbnail image"]
+    private static final List<String> LABEL_KEYWORDS = ["label", "label image", "overview", "overview image"]
+    private static final List<String> MACRO_KEYWORDS = ["macro", "macro image"]
+
     private def computedProperties
 
     def includeRaw = false
@@ -49,6 +63,15 @@ class PropertyExtractor extends Worker {
         this.file = file
         this.includeRaw = includeRaw
         this.legacyMode = legacyMode
+    }
+
+    private Integer getAssociatedSeries(MetadataRetrieve meta, List<String> keywords, int biggestSeries, int seriesCount) {
+        for (int i = 0; i < seriesCount; i++) {
+            if (i != biggestSeries && keywords.contains(meta.getImageName(i))) {
+                return i
+            }
+        }
+        return null
     }
 
     @Override
@@ -278,6 +301,60 @@ class PropertyExtractor extends Worker {
                     }
                 }
             }
+        }
+
+        def planes = []
+        (0..<reader.getImageCount()).each {p ->
+            try {
+                Integer c = meta.getPlaneTheC(biggestSeries, p).value
+                Integer z = meta.getPlaneTheZ(biggestSeries, p).value
+                Integer t = meta.getPlaneTheT(biggestSeries, p).value
+                planes << [
+                        'TheC': c,
+                        'TheZ': z,
+                        'TheT': t,
+                        '_Index': FormatTools.getIndex(reader, z, c, t),
+                        '_Series': biggestSeries
+                ]
+            }
+            catch (Exception ignored) {}
+        }
+        if (!planes.isEmpty()) {
+            properties['Bioformats.Planes'] = planes
+        }
+        
+        int seriesCount = reader.getSeriesCount()
+        Integer thumbSeries = this.getAssociatedSeries(meta, THUMB_KEYWORDS, biggestSeries, seriesCount)
+        if (thumbSeries != null) {
+            reader.setSeries(thumbSeries)
+            properties['Bioformats.Series.Thumb'] = [
+                    'Width': reader.getSizeX(),
+                    'Height': reader.getSizeY(),
+                    'Channels': reader.getSizeC(),
+                    '_Series': thumbSeries
+            ]
+        }
+
+        Integer labelSeries = this.getAssociatedSeries(meta, LABEL_KEYWORDS, biggestSeries, seriesCount)
+        if (labelSeries != null) {
+            reader.setSeries(labelSeries)
+            properties['Bioformats.Series.Label'] = [
+                    'Width': reader.getSizeX(),
+                    'Height': reader.getSizeY(),
+                    'Channels': reader.getSizeC(),
+                    '_Series': labelSeries
+            ]
+        }
+
+        Integer macroSeries = this.getAssociatedSeries(meta, MACRO_KEYWORDS, biggestSeries, seriesCount)
+        if (macroSeries != null) {
+            reader.setSeries(macroSeries)
+            properties['Bioformats.Series.Macro'] = [
+                    'Width': reader.getSizeX(),
+                    'Height': reader.getSizeY(),
+                    'Channels': reader.getSizeC(),
+                    '_Series': macroSeries
+            ]
         }
 
         this.computedProperties = properties.findAll {
