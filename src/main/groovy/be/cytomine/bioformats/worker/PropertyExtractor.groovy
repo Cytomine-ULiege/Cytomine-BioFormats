@@ -25,6 +25,7 @@ import loci.common.DebugTools
 import loci.common.services.DependencyException
 import loci.common.services.ServiceException
 import loci.common.services.ServiceFactory
+import loci.formats.FormatTools
 import loci.formats.ImageReader
 import loci.formats.MissingLibraryException
 import loci.formats.meta.DummyMetadata
@@ -33,6 +34,7 @@ import loci.formats.meta.MetadataStore
 import loci.formats.services.OMEXMLService
 import loci.formats.services.OMEXMLServiceImpl
 import ome.units.UNITS
+import ome.units.quantity.Length
 
 class PropertyExtractor extends Worker {
 
@@ -40,9 +42,13 @@ class PropertyExtractor extends Worker {
 
     def includeRaw = false
 
-    public PropertyExtractor(def file, def includeRaw) {
+    // Compatibility with IMS
+    def legacyMode = true
+
+    public PropertyExtractor(def file, def includeRaw, def legacyMode) {
         this.file = file
         this.includeRaw = includeRaw
+        this.legacyMode = legacyMode
     }
 
     @Override
@@ -74,33 +80,73 @@ class PropertyExtractor extends Worker {
         MetadataRetrieve meta = store instanceof MetadataRetrieve ?
                 (MetadataRetrieve) store : new DummyMetadata()
 
-        def physicalSizeX = null
+        String pixelType = null
         try {
-            physicalSizeX = meta.getPixelsPhysicalSizeX(biggestSeries)
+            // Should return one of: int8, uint8, int16, uint16, int32, uint32, float, double, bit
+            pixelType = FormatTools.getPixelTypeString(reader.getPixelType())
         }
         catch (Exception ignored) {}
 
-        def physicalSizeY = null
+        Number physicalSizeX = null
+        String physicalSizeXUnit = null
         try {
-            physicalSizeY = meta.getPixelsPhysicalSizeY(biggestSeries)
+            Length length = meta.getPixelsPhysicalSizeX(biggestSeries)
+            if (length.unit().isConvertible(UNITS.METER)) {
+                physicalSizeX = (legacyMode) ? length.value(UNITS.MICROMETER) : length.value()
+                physicalSizeXUnit = length.unit().getSymbol()
+            }
         }
         catch (Exception ignored) {}
 
-        def physicalSizeZ = null
+        Number physicalSizeY = null
+        String physicalSizeYUnit = null
         try {
-            physicalSizeZ = meta.getPixelsPhysicalSizeZ(biggestSeries)
+            Length length = meta.getPixelsPhysicalSizeY(biggestSeries)
+            if (length.unit().isConvertible(UNITS.METER)) {
+                physicalSizeY = (legacyMode) ? length.value(UNITS.MICROMETER) : length.value()
+                physicalSizeYUnit = length.unit().getSymbol()
+            }
         }
         catch (Exception ignored) {}
 
-        def timeIncrement = null
+        Number physicalSizeZ = null
+        String physicalSizeZUnit = null
         try {
-            timeIncrement = meta.getPixelsTimeIncrement(biggestSeries)
+            Length length = meta.getPixelsPhysicalSizeZ(biggestSeries)
+            if (length.unit().isConvertible(UNITS.METER)) {
+                physicalSizeZ = (legacyMode) ? length.value(UNITS.MICROMETER) : length.value()
+                physicalSizeZUnit = length.unit().getSymbol()
+            }
         }
         catch (Exception ignored) {}
 
-        def magnification = null
+        Number timeIncrement = null
+        String timeIncrementUnit = null
+        try {
+            Length length = meta.getPixelsTimeIncrement(biggestSeries)
+            if (length.unit().isConvertible(UNITS.SECOND)) {
+                timeIncrement = (legacyMode) ? length.value(UNITS.SECOND) : length.value()
+                timeIncrementUnit = length.unit().getSymbol()
+            }
+        }
+        catch (Exception ignored) {}
+
+        Double magnification = null
         try {
             magnification = meta.getObjectiveNominalMagnification(biggestSeries, 0)
+        }
+        catch(Exception ignored) {}
+
+        Double calibratedMagnification = null
+        try {
+            calibratedMagnification = meta.getObjectiveCalibratedMagnification(biggestSeries, 0)
+        }
+        catch(Exception ignored) {}
+
+        String microscope = null
+        try {
+            String instrumentIndex = meta.getImageInstrumentRef(biggestSeries)
+            microscope = meta.getMicroscopeModel(instrumentIndex)
         }
         catch(Exception ignored) {}
 
@@ -116,18 +162,69 @@ class PropertyExtractor extends Worker {
         }
         catch (Exception ignored) {}
 
-        def channelNames = [:]
+        String description = null
         try {
-            (0..<reader.getSizeC()).each {
-                def channelName = meta.getChannelName(biggestSeries, it)
-                if (!channelName) channelName = meta.getChannelEmissionWavelength(biggestSeries, it)
-                if (channelName != null)
-                    channelNames << [(it): channelName]
-            }
+            description = meta.getImageDescription(biggestSeries)
         }
         catch (Exception ignored) {}
+
+        def channelNames = [:]
+        def channels = []
+        (0..<reader.getSizeC()).each {c ->
+            String channelName = null
+            try {
+                channelName = meta.getChannelName(biggestSeries, c)
+            }
+            catch (Exception ignored) {}
+
+            Number emissionWavelength = null
+            String emissionWavelengthUnit = null
+            try {
+                Length length = meta.getChannelEmissionWavelength(biggestSeries, c)
+                if (length.unit().isConvertible(UNITS.METER)) {
+                    emissionWavelength = (legacyMode) ? length.value(UNITS.NANOMETER) : length.value()
+                    emissionWavelengthUnit = length.unit().getSymbol()
+                }
+            }
+            catch (Exception ignored) {}
+
+            Number excitationWavelength = null
+            String excitationWavelengthUnit = null
+            try {
+                Length length = meta.getChannelExcitationWavelength(biggestSeries, c)
+                if (length.unit().isConvertible(UNITS.METER)) {
+                    excitationWavelength = (legacyMode) ? length.value(UNITS.NANOMETER) : length.value()
+                    excitationWavelengthUnit = length.unit().getSymbol()
+                }
+            }
+            catch (Exception ignored) {}
+
+            Integer color = null
+            try {
+                color = meta.getChannelColor(biggestSeries, c).value
+            }
+            catch (Exception ignored) {}
+
+            String suggestedName = (String)(channelName ?: emissionWavelength ?: excitationWavelength)
+            if (suggestedName != null)
+                channelNames << [(c): suggestedName]
+
+            channels << [
+                    Name: channelName,
+                    EmissionWavelength: emissionWavelength,
+                    EmissionWavelengthUnit: emissionWavelengthUnit,
+                    ExcitationWavelength: excitationWavelength,
+                    ExcitationWavelengthUnit: excitationWavelengthUnit,
+                    Color: color,
+                    SuggestedName: suggestedName
+            ]
+        }
+
         if (channelNames.isEmpty()) {
             channelNames = null
+        }
+        if (channels.isEmpty()) {
+            channels = null
         }
 
         def properties = [
@@ -137,18 +234,26 @@ class PropertyExtractor extends Worker {
                 'Bioformats.Pixels.SizeC': reader.getSizeC(),
                 'Bioformats.Pixels.SizeT': reader.getSizeT(),
                 'Bioformats.Pixels.BitsPerPixel': reader.getBitsPerPixel(),
+                'Bioformats.Pixels.PixelType': pixelType,
+                'Bioformats.Pixels.EffectiveSizeC': reader.getEffectiveSizeC(),
+                'Bioformats.Pixels.IsRGB': reader.isRGB(),
+                'Bioformats.Pixels.RGBChannelCount': reader.getRGBChannelCount(),
                 'Bioformats.Pixels.SamplesPerPixel': spp,
-                'Bioformats.Pixels.PhysicalSizeX': physicalSizeX?.value(UNITS.MICROMETER),
-                'Bioformats.Pixels.PhysicalSizeXUnit': (physicalSizeX) ? "µm" : null,
-                'Bioformats.Pixels.PhysicalSizeY': physicalSizeY?.value(UNITS.MICROMETER),
-                'Bioformats.Pixels.PhysicalSizeYUnit': (physicalSizeY) ? "µm" : null,
-                'Bioformats.Pixels.PhysicalSizeZ': physicalSizeZ?.value(UNITS.MICROMETER),
-                'Bioformats.Pixels.PhysicalSizeZUnit': (physicalSizeZ) ? "µm" : null,
-                'Bioformats.Pixels.TimeIncrement': timeIncrement?.value(UNITS.SECOND),
-                'Bioformats.Pixels.TimeIncrementUnit': (timeIncrement) ? 's' : null,
+                'Bioformats.Pixels.PhysicalSizeX': physicalSizeX,
+                'Bioformats.Pixels.PhysicalSizeXUnit': physicalSizeXUnit,
+                'Bioformats.Pixels.PhysicalSizeY': physicalSizeY,
+                'Bioformats.Pixels.PhysicalSizeYUnit': physicalSizeYUnit,
+                'Bioformats.Pixels.PhysicalSizeZ': physicalSizeZ,
+                'Bioformats.Pixels.PhysicalSizeZUnit': physicalSizeZUnit,
+                'Bioformats.Pixels.TimeIncrement': timeIncrement,
+                'Bioformats.Pixels.TimeIncrementUnit': timeIncrementUnit,
                 'Bioformats.Objective.NominalMagnification': magnification,
+                'Bioformats.Objective.CalibratedMagnification': calibratedMagnification,
+                'Bioformats.Microscope.Model': microscope,
+                'Bioformats.Image.Description': description,
                 'Bioformats.Image.AcquisitionDate': date,
-                'Bioformats.Channels.Name': channelNames
+                'Bioformats.Channels.Name': channelNames,
+                'Bioformats.Channels': channels,
         ]
 
         if (includeRaw) {

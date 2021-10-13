@@ -65,7 +65,7 @@ class CommunicationProtocol {
                     throw new FormatException("Missing JSON parameters required for this action.")
                 return new Convertor(file, json.group, json.onlyBiggestSerie)
             case "properties":
-                return new PropertyExtractor(file, json.includeRawProperties ?: false)
+                return new PropertyExtractor(file, json.includeRawProperties ?: false, json.legacyMode ?: true)
             default:
                 throw new FormatException("Unknown action")
         }
