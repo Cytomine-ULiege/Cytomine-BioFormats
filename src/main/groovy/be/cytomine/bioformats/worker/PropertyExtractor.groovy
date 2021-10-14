@@ -357,9 +357,7 @@ class PropertyExtractor extends Worker {
             ]
         }
 
-        this.computedProperties = properties.findAll {
-            it.value != null && !(it as String).isEmpty()
-        }
+        this.computedProperties = BioFormatsUtils.deepPrune(properties)
     }
 
     @Override

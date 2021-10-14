@@ -51,4 +51,25 @@ class BioFormatsUtils {
 
         return file.substring(0, file.lastIndexOf("."))
     }
+
+    static Map deepPrune(Map map) {
+        return map.collectEntries { k, v ->
+            def newV
+            if (v instanceof Map) {
+                newV = deepPrune(v)
+            }
+            else if (v instanceof List) {
+                newV = v.collect { it ->
+                    it instanceof Map ? deepPrune(it) : it
+                }
+            }
+            else {
+                newV = v
+            }
+
+            [k, newV]
+        }.findAll { k, v ->
+            v != null && !(v as String).isEmpty()
+        } as Map
+    }
 }
