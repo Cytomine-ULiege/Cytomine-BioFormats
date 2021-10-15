@@ -1,16 +1,10 @@
 package be.cytomine.bioformats
 
+import loci.common.DataTools
+
 /*
  * Cytomine-Bioformats, a wrapper to link Bio-formats with Cytomine.
  * Copyright (C) 2015-2020 cytomine.org
- *
- * This file is highly inspired from loci.formats.tools.ImageConverter.java:
- * Bio-Formats command line tools for reading and converting files
- * Copyright (C) 2005 - 2017 Open Microscopy Environment:
- *   - Board of Regents of the University of Wisconsin-Madison
- *   - Glencoe Software, Inc.
- *   - University of Dundee
- * https://github.com/ome/bioformats/blob/develop/components/bio-formats-tools/src/loci/formats/tools/ImageConverter.java
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,20 +22,12 @@ package be.cytomine.bioformats
  * USA.
  */
 
-import loci.common.DataTools
 import loci.common.image.IImageScaler
 import loci.common.image.SimpleImageScaler
 import loci.common.services.DependencyException
 import loci.common.services.ServiceException
 import loci.common.services.ServiceFactory
-import loci.formats.FormatTools
-import loci.formats.IFormatReader
-import loci.formats.IFormatWriter
-import loci.formats.ImageReader
-import loci.formats.ImageWriter
-import loci.formats.Memoizer
-import loci.formats.MetadataTools
-import loci.formats.MissingLibraryException
+import loci.formats.*
 import loci.formats.gui.Index16ColorModel
 import loci.formats.in.DynamicMetadataOptions
 import loci.formats.meta.DummyMetadata
@@ -63,6 +49,17 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import java.awt.image.IndexColorModel
+
+/*
+ * This file is highly inspired from loci.formats.tools.ImageConverter.java:
+ * Bio-Formats command line tools for reading and converting files
+ * Copyright (C) 2005 - 2017 Open Microscopy Environment:
+ *   - Board of Regents of the University of Wisconsin-Madison
+ *   - Glencoe Software, Inc.
+ *   - University of Dundee
+ * https://github.com/ome/bioformats/blob/develop/components/bio-formats-tools/src/loci/formats/tools/ImageConverter.java
+ *
+ */
 
 class ImageConverter {
     private static final Logger LOGGER = LoggerFactory.getLogger(loci.formats.tools.ImageConverter.class)
@@ -112,8 +109,7 @@ class ImageConverter {
             String basePath = BioFormatsUtils.removeExtension(input.absolutePath - input.parent)
             this.outputPattern = new File(target, "${basePath}${OUT_PATTERN}.tif").absolutePath
             this.format = "TIFF"
-        }
-        else {
+        } else {
             this.outputPattern = target.absolutePath
             this.format = "OMETIFF"
         }
@@ -143,17 +139,17 @@ class ImageConverter {
             // OutputIndex should be reset at the start of a new series
             nextOutputIndex.clear()
             boolean generatePyramid = pyramidResolutions > reader.getResolutionCount()
-            int resolutionCount = generatePyramid ? pyramidResolutions : reader.getResolutionCount();
+            int resolutionCount = generatePyramid ? pyramidResolutions : reader.getResolutionCount()
             for (int res = 0; res < resolutionCount; res++) {
                 if (!generatePyramid) {
-                    reader.setResolution(res);
+                    reader.setResolution(res)
                 }
                 firstTile = true
 
                 if (generatePyramid && res > 0) {
-                    int scale = (int) Math.pow(pyramidScale, res);
-                    width /= scale;
-                    height /= scale;
+                    int scale = (int) Math.pow(pyramidScale, res)
+                    width /= scale
+                    height /= scale
                 }
 
                 int writerSeries = series == -1 ? q : 0
@@ -224,8 +220,7 @@ class ImageConverter {
     private def setupWriter() {
         if (this.format == "OMETIFF") {
             writer = new OMETiffWriter()
-        }
-        else {
+        } else {
             writer = new TiffWriter()
         }
 
@@ -443,8 +438,8 @@ class ImageConverter {
                 if (currentFile.indexOf(FormatTools.TILE_NUM) >= 0 ||
                         currentFile.indexOf(FormatTools.TILE_X) >= 0 ||
                         currentFile.indexOf(FormatTools.TILE_Y) >= 0) {
-                    outputX = 0;
-                    outputY = 0;
+                    outputX = 0
+                    outputY = 0
                 }
 
                 if (writer instanceof TiffWriter) {

@@ -60,13 +60,14 @@ class PropertyExtractor extends Worker {
     // Compatibility with IMS
     def legacyMode = true
 
-    public PropertyExtractor(def file, def includeRaw, def legacyMode) {
+    PropertyExtractor(def file, def includeRaw, def legacyMode) {
         this.file = file
         this.includeRaw = includeRaw
         this.legacyMode = legacyMode
     }
 
-    private Integer getAssociatedSeries(MetadataRetrieve meta, List<String> keywords, int biggestSeries, int seriesCount) {
+    private Integer getAssociatedSeries(MetadataRetrieve meta, List<String> keywords,
+                                        int biggestSeries, int seriesCount) {
         for (int i = 0; i < seriesCount; i++) {
             if (i != biggestSeries && keywords.contains(meta.getImageName(i))) {
                 return i
@@ -194,7 +195,7 @@ class PropertyExtractor extends Worker {
 
         def channelNames = [:]
         def channels = []
-        (0..<reader.getSizeC()).each {c ->
+        (0..<reader.getSizeC()).each { c ->
             String channelName = null
             try {
                 channelName = meta.getChannelName(biggestSeries, c)
@@ -229,7 +230,7 @@ class PropertyExtractor extends Worker {
             }
             catch (Exception ignored) {}
 
-            String suggestedName = (String)(channelName ?: emissionWavelength ?: excitationWavelength)
+            String suggestedName = (String) (channelName ?: emissionWavelength ?: excitationWavelength)
             if (suggestedName != null)
                 channelNames << [(c): suggestedName]
 
@@ -283,21 +284,18 @@ class PropertyExtractor extends Worker {
         if (includeRaw) {
             reader.getGlobalMetadata().each {
                 if (legacyMode) {
-                    properties << [(it.key.replaceAll("\\|", ".").replaceAll(" #", "[") + "]") : it.value]
-                }
-                else {
+                    properties << [(it.key.replaceAll("\\|", ".").replaceAll(" #", "[") + "]"): it.value]
+                } else {
                     List tokens = it.key.replaceAll("\\|", ".").split(" #")
                     String key = tokens[0]
                     if (key in properties.keySet()) {
                         def existing = properties[key]
                         if (existing instanceof List) {
                             properties[key] = existing + [it.value]
-                        }
-                        else {
+                        } else {
                             properties[key] = [existing, it.value]
                         }
-                    }
-                    else {
+                    } else {
                         properties << [(key): it.value]
                     }
                 }
@@ -305,7 +303,7 @@ class PropertyExtractor extends Worker {
         }
 
         def planes = []
-        (0..<reader.getImageCount()).each {p ->
+        (0..<reader.getImageCount()).each { p ->
             try {
                 Integer c = meta.getPlaneTheC(biggestSeries, p).value
                 Integer z = meta.getPlaneTheZ(biggestSeries, p).value
@@ -323,7 +321,7 @@ class PropertyExtractor extends Worker {
         if (!planes.isEmpty()) {
             properties['Bioformats.Planes'] = planes
         }
-        
+
         int seriesCount = reader.getSeriesCount()
         Integer thumbSeries = this.getAssociatedSeries(meta, THUMB_KEYWORDS, biggestSeries, seriesCount)
         if (thumbSeries != null) {

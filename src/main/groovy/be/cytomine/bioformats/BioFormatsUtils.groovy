@@ -59,13 +59,11 @@ class BioFormatsUtils {
             def newV
             if (v instanceof Map) {
                 newV = deepPrune(v)
-            }
-            else if (v instanceof List) {
+            } else if (v instanceof List) {
                 newV = v.collect { it ->
                     it instanceof Map ? deepPrune(it) : it
                 }
-            }
-            else {
+            } else {
                 newV = v
             }
 

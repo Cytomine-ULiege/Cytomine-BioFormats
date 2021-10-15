@@ -29,8 +29,8 @@ class Identifier extends Worker {
 
     private String format = null
 
-    public Identifier(def file) {
-        this.file = file;
+    Identifier(def file) {
+        this.file = file
     }
 
     @Override

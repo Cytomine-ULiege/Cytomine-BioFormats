@@ -1,5 +1,7 @@
 package be.cytomine.bioformats.worker
 
+import be.cytomine.bioformats.BioFormatsUtils
+
 /*
  * Cytomine-Bioformats, a wrapper to link Bio-formats with Cytomine.
  * Copyright (C) 2015-2020 cytomine.org
@@ -20,8 +22,6 @@ package be.cytomine.bioformats.worker
  * USA.
  */
 
-import be.cytomine.bioformats.BioFormatsUtils
-import be.cytomine.bioformats.CytomineFile
 import be.cytomine.bioformats.FormatException
 import be.cytomine.bioformats.ImageConverter
 import loci.common.DebugTools
@@ -46,9 +46,9 @@ class Convertor extends Worker {
     Integer nPyramidResolutions = 1
     Integer pyramidScaleFactor = 1
 
-    public Convertor(File input, String output, Boolean group, Boolean onlyBiggestSeries,
-                     Boolean keepOriginalMetadata, String compression, Boolean flatten,
-                     Integer nPyramidResolutions, Integer pyramidScaleFactor, Boolean legacyMode) {
+    Convertor(File input, String output, Boolean group, Boolean onlyBiggestSeries,
+              Boolean keepOriginalMetadata, String compression, Boolean flatten,
+              Integer nPyramidResolutions, Integer pyramidScaleFactor, Boolean legacyMode) {
         this.file = input
         if (output != null) {
             this.output = new File(output)
@@ -79,8 +79,7 @@ class Convertor extends Worker {
             output.mkdirs()
             output.setReadable(true, false)
             output.setWritable(true, false)
-        }
-        else {
+        } else {
             if (output.path.endsWith(".EPTIFF")) {
                 // If we want an exploded pyramidal tiff (equivalent to legacy mode)
                 output.mkdirs()
@@ -90,8 +89,8 @@ class Convertor extends Worker {
         }
 
 
-        ImageConverter ic = new ImageConverter(file, output, serieNumber, compression, keepOriginalMetadata,
-                flatten, nPyramidResolutions, pyramidScaleFactor)
+        ImageConverter ic = new ImageConverter(file, output, serieNumber, compression,
+                keepOriginalMetadata, flatten, nPyramidResolutions, pyramidScaleFactor)
         List<File> results = []
         try {
             results = ic.convert()
@@ -105,12 +104,10 @@ class Convertor extends Worker {
             log.info("conversion result")
             log.info(results.toString())
             this.convertedFiles = results
-        }
-        else {
+        } else {
             this.convertedFiles = [output]
         }
     }
-
 
 
     @Override

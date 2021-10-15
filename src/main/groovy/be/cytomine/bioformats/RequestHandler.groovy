@@ -1,5 +1,7 @@
 package be.cytomine.bioformats
 
+import be.cytomine.bioformats.worker.Worker
+
 /*
  * Cytomine-Bioformats, a wrapper to link Bio-formats with Cytomine.
  * Copyright (C) 2015-2020 cytomine.org
@@ -19,8 +21,6 @@ package be.cytomine.bioformats
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
  * USA.
  */
-
-import be.cytomine.bioformats.worker.Worker
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -51,7 +51,7 @@ class RequestHandler implements Runnable {
                     outputLine = CommunicationProtocol.getOutput(w)
                     log.info("Return: " + outputLine)
                 }
-                catch(Exception e) {
+                catch (Exception e) {
                     outputLine = CommunicationProtocol.getOutput(e)
                     log.error("Error: " + outputLine)
                 }

@@ -1,5 +1,7 @@
 package be.cytomine.bioformats
 
+import be.cytomine.bioformats.worker.Convertor
+
 /*
  * Cytomine-Bioformats, a wrapper to link Bio-formats with Cytomine.
  * Copyright (C) 2015-2020 cytomine.org
@@ -20,11 +22,9 @@ package be.cytomine.bioformats
  * USA.
  */
 
-import be.cytomine.bioformats.worker.Convertor
 import be.cytomine.bioformats.worker.Identifier
 import be.cytomine.bioformats.worker.PropertyExtractor
 import be.cytomine.bioformats.worker.Worker
-
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import org.slf4j.Logger
@@ -34,7 +34,7 @@ class CommunicationProtocol {
 
     private static final Logger log = LoggerFactory.getLogger(CommunicationProtocol.class)
 
-    public static Worker getWorkerFromInput(String input) {
+    static Worker getWorkerFromInput(String input) {
         log.info("Identify worker for input ${input}")
 
         if (input == null || input == "")
@@ -81,11 +81,11 @@ class CommunicationProtocol {
         }
     }
 
-    public static String getOutput(Worker w) {
+    static String getOutput(Worker w) {
         return JsonOutput.toJson(w.getOutput())
     }
 
-    public static String getOutput(Exception e) {
+    static String getOutput(Exception e) {
         return JsonOutput.toJson([error: e.getMessage()])
     }
 
