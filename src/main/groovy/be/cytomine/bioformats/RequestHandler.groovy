@@ -29,9 +29,11 @@ class RequestHandler implements Runnable {
     private static final Logger log = LogManager.getLogger(RequestHandler.class)
 
     private Socket client
+    private int id
 
-    RequestHandler(Socket client) {
+    RequestHandler(Socket client, int id) {
         this.client = client
+        this.id = id
     }
 
     void run() {
@@ -42,21 +44,27 @@ class RequestHandler implements Runnable {
             String inputLine, outputLine
 
             while ((inputLine = input.readLine()) != null) {
+                long start = System.currentTimeMillis()
                 try {
-                    log.info("Received input $inputLine")
+                    log.info("[#$id] Received input $inputLine")
                     Worker w = CommunicationProtocol.getWorkerFromInput(inputLine)
 
                     DebugTools.enableLogging()
                     w.process()
 
                     outputLine = CommunicationProtocol.getOutput(w)
-                    log.info("Return: " + outputLine)
+                    output.println(outputLine)
+
+                    long d = System.currentTimeMillis() - start
+                    log.info("[#$id] OK ${d}ms - Response:" + outputLine)
                 }
                 catch (Exception e) {
                     outputLine = CommunicationProtocol.getOutput(e)
-                    log.error("Error: " + outputLine)
+                    output.println(outputLine)
+
+                    long d = System.currentTimeMillis() - start
+                    log.error("[#$id] ERROR ${d}ms - " + outputLine)
                 }
-                output.println(outputLine)
             }
         } catch (IOException e) {
             log.error("IO Exception in request handler")

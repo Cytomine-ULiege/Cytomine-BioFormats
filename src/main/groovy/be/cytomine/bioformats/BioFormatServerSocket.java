@@ -70,6 +70,7 @@ public class BioFormatServerSocket {
 
         log.info("Listen on port " + portNumber);
 
+        int requestNumber = 0;
         try {
             File cache = new File(BioFormatsUtils.CACHE_DIRECTORY);
             boolean ok = cache.mkdirs();
@@ -84,7 +85,7 @@ public class BioFormatServerSocket {
 
         try (ServerSocket serverSocket = new ServerSocket(portNumber)) {
             while (true) {
-                RequestHandler w = new RequestHandler(serverSocket.accept());
+                RequestHandler w = new RequestHandler(serverSocket.accept(), ++requestNumber);
                 executor.submit(w);
             }
         } catch (IOException e) {
