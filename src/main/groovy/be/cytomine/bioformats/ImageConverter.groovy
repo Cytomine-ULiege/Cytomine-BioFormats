@@ -125,7 +125,9 @@ class ImageConverter {
         int first = series == -1 ? 0 : series
         int last = series == -1 ? num : series + 1
         long timeLastLogged = System.currentTimeMillis()
+        int numSeries = last - first
         for (int q = first; q < last; q++) {
+            LOGGER.info("Converting series ${q+1}/$numSeries")
             reader.setSeries(q)
             MetadataRetrieve retrieve = store instanceof MetadataRetrieve ?
                     (MetadataRetrieve) store : new DummyMetadata()
@@ -149,6 +151,8 @@ class ImageConverter {
                     width /= scale
                     height /= scale
                 }
+                LOGGER.info("[Series $q] Converting resolution ${res+1}/$resolutionCount " +
+                        "- $width x $height")
 
                 int writerSeries = series == -1 ? q : 0
                 writer.setSeries(writerSeries)
@@ -197,13 +201,12 @@ class ImageConverter {
                         int current = (count - startPlane) + 1
                         int percent = 100 * current / numImages
                         StringBuilder sb = new StringBuilder()
-                        sb.append("\t")
-                        int numSeries = last - first
-                        if (numSeries > 1) {
-                            sb.append("Series ")
-                            sb.append(q)
-                            sb.append(": converted ")
-                        } else sb.append("Converted ")
+                        sb.append("[Series ")
+                        sb.append(q)
+                        sb.append("][Resolution ")
+                        sb.append(res)
+                        sb.append("] converted ")
+
                         LOGGER.info(sb.toString() + "$current/$numImages planes ($percent%)")
                         timeLastLogged = e
                     }
