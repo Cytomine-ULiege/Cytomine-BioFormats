@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class BioFormatServerSocket {
     private static final Logger log = LogManager.getLogger(BioFormatServerSocket.class);
@@ -52,6 +54,17 @@ public class BioFormatServerSocket {
             portNumber = Integer.parseInt(args[0]);
         }
 
+        int poolSize = 4;
+        if (args.length >= 2) {
+            poolSize = Integer.parseInt(args[1]);
+        }
+        if (poolSize == -1) {
+            poolSize = Runtime.getRuntime().availableProcessors();
+        }
+        log.info("Thread pool size: " + poolSize);
+        ThreadPoolExecutor executor =
+                (ThreadPoolExecutor) Executors.newFixedThreadPool(poolSize);
+
         BioFormatServerSocket main = new BioFormatServerSocket();
         main.printBioFormatsInfo();
 
@@ -72,8 +85,7 @@ public class BioFormatServerSocket {
         try (ServerSocket serverSocket = new ServerSocket(portNumber)) {
             while (true) {
                 RequestHandler w = new RequestHandler(serverSocket.accept());
-                Thread t = new Thread(w);
-                t.start();
+                executor.submit(w);
             }
         } catch (IOException e) {
             log.error("Exception caught when trying to listen on port "
