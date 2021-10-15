@@ -26,15 +26,15 @@ import be.cytomine.bioformats.worker.PropertyExtractor
 import be.cytomine.bioformats.worker.Worker
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 
 class CommunicationProtocol {
 
-    private static final Logger log = LoggerFactory.getLogger(CommunicationProtocol.class)
+    private static final Logger log = LogManager.getLogger(CommunicationProtocol.class)
 
     static Worker getWorkerFromInput(String input) {
-        log.info("Identify worker for input ${input}")
+        log.debug("Identify worker for input ${input}")
 
         if (input == null || input == "")
             throw new FormatException("Request is null or empty")

@@ -21,7 +21,6 @@
 package be.cytomine.bioformats.worker
 
 import be.cytomine.bioformats.BioFormatsUtils
-import loci.common.DebugTools
 import loci.formats.ImageReader
 import loci.formats.Memoizer
 
@@ -36,8 +35,6 @@ class Identifier extends Worker {
 
     @Override
     def process() {
-        DebugTools.enableLogging("INFO")
-
         def reader = new Memoizer(new ImageReader(), 0, new File(BioFormatsUtils.CACHE_DIRECTORY))
         reader.setId(this.file.absolutePath)
         this.format = reader.getFormat()

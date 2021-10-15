@@ -21,7 +21,6 @@
 package be.cytomine.bioformats.worker
 
 import be.cytomine.bioformats.BioFormatsUtils
-import loci.common.DebugTools
 import loci.common.services.DependencyException
 import loci.common.services.ServiceException
 import loci.common.services.ServiceFactory
@@ -78,8 +77,6 @@ class PropertyExtractor extends Worker {
 
     @Override
     def process() {
-        DebugTools.enableLogging("INFO")
-
         def reader = new Memoizer(new ImageReader(), 0, new File(BioFormatsUtils.CACHE_DIRECTORY))
         reader.setMetadataFiltered(true)
         reader.setOriginalMetadataPopulated(true)

@@ -23,14 +23,13 @@ package be.cytomine.bioformats.worker
 import be.cytomine.bioformats.BioFormatsUtils
 import be.cytomine.bioformats.FormatException
 import be.cytomine.bioformats.ImageConverter
-import loci.common.DebugTools
 import loci.formats.ImageReader
 import loci.formats.Memoizer
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 
 class Convertor extends Worker {
-    private static final Logger log = LoggerFactory.getLogger(Convertor.class)
+    private static final Logger log = LogManager.getLogger(Convertor.class)
 
     private def convertedFiles
     private File output = null
@@ -65,8 +64,6 @@ class Convertor extends Worker {
     }
 
     def process() throws Exception {
-        DebugTools.enableLogging("INFO")
-
         def reader = new Memoizer(new ImageReader(), 0, new File(BioFormatsUtils.CACHE_DIRECTORY))
         reader.setId(file.absolutePath)
 
@@ -100,8 +97,7 @@ class Convertor extends Worker {
         }
 
         if (this.legacyMode) {
-            log.info("conversion result")
-            log.info(results.toString())
+            log.info("conversion result: " + results.toString())
             this.convertedFiles = results
         } else {
             this.convertedFiles = [output]
