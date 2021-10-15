@@ -16,7 +16,7 @@ repositories {
     }
 }
 
-def bioformatsVersion = '6.5.0'
+def bioformatsVersion = '6.7.0'
 dependencies {
     implementation 'org.codehaus.groovy:groovy-all:3.0.9'
     compile("ome:formats-gpl:${bioformatsVersion}") {
