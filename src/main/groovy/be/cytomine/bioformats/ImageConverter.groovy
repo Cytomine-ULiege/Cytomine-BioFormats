@@ -1,19 +1,15 @@
-package be.cytomine.bioformats
-
-import loci.common.DataTools
-
 /*
  * Cytomine-Bioformats, a wrapper to link Bio-formats with Cytomine.
- * Copyright (C) 2015-2020 cytomine.org
+ * Copyright (C) 2015-2021 cytomine.org
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at
- * your option) any later version.
+ *  your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
+ *  This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
@@ -22,6 +18,13 @@ import loci.common.DataTools
  * USA.
  */
 
+
+
+
+
+package be.cytomine.bioformats
+
+import loci.common.DataTools
 import loci.common.image.IImageScaler
 import loci.common.image.SimpleImageScaler
 import loci.common.services.DependencyException
@@ -49,17 +52,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import java.awt.image.IndexColorModel
-
-/*
- * This file is highly inspired from loci.formats.tools.ImageConverter.java:
- * Bio-Formats command line tools for reading and converting files
- * Copyright (C) 2005 - 2017 Open Microscopy Environment:
- *   - Board of Regents of the University of Wisconsin-Madison
- *   - Glencoe Software, Inc.
- *   - University of Dundee
- * https://github.com/ome/bioformats/blob/develop/components/bio-formats-tools/src/loci/formats/tools/ImageConverter.java
- *
- */
 
 class ImageConverter {
     private static final Logger LOGGER = LoggerFactory.getLogger(loci.formats.tools.ImageConverter.class)
