@@ -27,6 +27,7 @@ import loci.common.services.ServiceException
 import loci.common.services.ServiceFactory
 import loci.formats.FormatTools
 import loci.formats.ImageReader
+import loci.formats.Memoizer
 import loci.formats.MissingLibraryException
 import loci.formats.meta.DummyMetadata
 import loci.formats.meta.MetadataRetrieve
@@ -78,7 +79,7 @@ class PropertyExtractor extends Worker {
     def process() {
         DebugTools.enableLogging("INFO")
 
-        def reader = new ImageReader()
+        def reader = new Memoizer(new ImageReader(), 0, new File(BioFormatsUtils.CACHE_DIRECTORY))
         reader.setMetadataFiltered(true)
         reader.setOriginalMetadataPopulated(true)
 

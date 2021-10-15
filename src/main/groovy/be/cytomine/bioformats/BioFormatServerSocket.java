@@ -23,6 +23,7 @@ package be.cytomine.bioformats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
@@ -54,6 +55,18 @@ public class BioFormatServerSocket {
         main.printBioFormatsInfo();
 
         log.info("Listen on port " + portNumber);
+
+        try {
+            File cache = new File(BioFormatsUtils.CACHE_DIRECTORY);
+            boolean ok = cache.mkdirs();
+            if (ok) {
+                cache.setReadable(true, false);
+                cache.setExecutable(true, false);
+            }
+        } catch (SecurityException e) {
+            log.error("Impossible to create cache directory");
+            log.error(e.getMessage());
+        }
 
         try (ServerSocket serverSocket = new ServerSocket(portNumber)) {
             while (true) {

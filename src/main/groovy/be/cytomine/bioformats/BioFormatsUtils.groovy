@@ -1,5 +1,7 @@
 package be.cytomine.bioformats
 
+import loci.formats.IFormatReader
+
 /*
  * Cytomine-Bioformats, a wrapper to link Bio-formats with Cytomine.
  * Copyright (C) 2015-2020 cytomine.org
@@ -20,11 +22,11 @@ package be.cytomine.bioformats
  * USA.
  */
 
-import loci.formats.ImageReader
-
 class BioFormatsUtils {
 
-    static int getBiggestSeries(ImageReader reader) {
+    public static final String CACHE_DIRECTORY = "/tmp/cache"
+
+    static int getBiggestSeries(IFormatReader reader) {
         long biggestArea = 0
         long biggestSeries = 0
 

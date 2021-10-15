@@ -40,6 +40,7 @@ import loci.formats.IFormatReader
 import loci.formats.IFormatWriter
 import loci.formats.ImageReader
 import loci.formats.ImageWriter
+import loci.formats.Memoizer
 import loci.formats.MetadataTools
 import loci.formats.MissingLibraryException
 import loci.formats.gui.Index16ColorModel
@@ -241,7 +242,7 @@ class ImageConverter {
     }
 
     private def setupReader() {
-        reader = new ImageReader()
+        reader = new Memoizer(new ImageReader(), 0, new File(BioFormatsUtils.CACHE_DIRECTORY))
         reader.setMetadataOptions(options)
         reader.setGroupFiles(true)
         reader.setMetadataFiltered(true)

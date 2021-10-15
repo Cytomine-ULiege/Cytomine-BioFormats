@@ -26,6 +26,7 @@ import be.cytomine.bioformats.FormatException
 import be.cytomine.bioformats.ImageConverter
 import loci.common.DebugTools
 import loci.formats.ImageReader
+import loci.formats.Memoizer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -46,7 +47,7 @@ class Convertor extends Worker {
     def process() throws Exception {
         DebugTools.enableLogging("INFO")
 
-        def reader = new ImageReader()
+        def reader = new Memoizer(new ImageReader(), 0, new File(BioFormatsUtils.CACHE_DIRECTORY))
         reader.setId(file.absolutePath)
 
         def serieNumber = (onlyBiggestSerie) ? BioFormatsUtils.getBiggestSeries(reader) : -1
