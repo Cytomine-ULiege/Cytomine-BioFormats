@@ -94,7 +94,7 @@ class ImageConverter {
                    Boolean keepOriginalMetadata, Boolean flatten, Integer nPyramidResolutions,
                    Integer pyramidScaleFactor, Integer tileSize = 256) {
         this.input = input
-        this.series = series ?: -1
+        this.series = (series != null) ? series : -1
         this.tileWidth = tileSize
         this.tileHeight = tileSize
         this.compression = compression
