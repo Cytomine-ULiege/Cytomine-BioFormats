@@ -1,5 +1,10 @@
 package be.cytomine.bioformats.worker
 
+import be.cytomine.bioformats.BioFormatsUtils
+import loci.common.DebugTools
+import loci.formats.ImageReader
+import loci.formats.Memoizer
+
 /*
  * Cytomine-Bioformats, a wrapper to link Bio-formats with Cytomine.
  * Copyright (C) 2015-2020 cytomine.org
@@ -22,17 +27,23 @@ package be.cytomine.bioformats.worker
 
 class Identifier extends Worker {
 
+    private String format = null
+
     public Identifier(def file) {
         this.file = file;
     }
 
     @Override
     def process() {
-        return null
+        DebugTools.enableLogging("INFO")
+
+        def reader = new Memoizer(new ImageReader(), 0, new File(BioFormatsUtils.CACHE_DIRECTORY))
+        reader.setId(this.file.absolutePath)
+        this.format = reader.getFormat()
     }
 
     @Override
     def getOutput() {
-        return null
+        return [format: this.format]
     }
 }
