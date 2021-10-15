@@ -63,9 +63,19 @@ class CommunicationProtocol {
             case "convert":
                 if (!keys.containsAll(["group", "onlyBiggestSerie", "path"]))
                     throw new FormatException("Missing JSON parameters required for this action.")
-                return new Convertor(file, json.group, json.onlyBiggestSerie)
+                def output = getParamValue(json, 'output', null)
+                def keepOriginalMetadata = getParamValue(json, 'keepOriginalMetadata', true)
+                def compression = getParamValue(json, 'compression', "LZW")
+                def flatten = getParamValue(json, 'flatten', true)
+                def nPyramidResolutions = getParamValue(json, 'nPyramidResolutions', null)
+                def pyramidScaleFactor = getParamValue(json, 'pyramidScaleFactor', 2)
+                def legacyMode = getParamValue(json, 'legacyMode', true)
+                return new Convertor(file, output, json.group, json.onlyBiggestSerie, keepOriginalMetadata,
+                        compression, flatten, nPyramidResolutions, pyramidScaleFactor, legacyMode)
             case "properties":
-                return new PropertyExtractor(file, json.includeRawProperties ?: false, json.legacyMode ?: true)
+                def includeRawProperties = getParamValue(json, 'includeRawProperties', false)
+                def legacyMode = getParamValue(json, 'legacyMode', true)
+                return new PropertyExtractor(file, includeRawProperties, legacyMode)
             default:
                 throw new FormatException("Unknown action")
         }
@@ -77,5 +87,12 @@ class CommunicationProtocol {
 
     public static String getOutput(Exception e) {
         return JsonOutput.toJson([error: e.getMessage()])
+    }
+
+    private static def getParamValue(def json, String key, def defaultValue) {
+        if (key in json.keySet()) {
+            return json[key]
+        }
+        return defaultValue
     }
 }

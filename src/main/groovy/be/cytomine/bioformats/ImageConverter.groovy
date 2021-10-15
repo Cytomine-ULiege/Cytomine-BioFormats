@@ -10,8 +10,7 @@ package be.cytomine.bioformats
  *   - Board of Regents of the University of Wisconsin-Madison
  *   - Glencoe Software, Inc.
  *   - University of Dundee
- * https://github.com/ome/bioformats/blob/develop/components/
- * bio-formats-tools/src/loci/formats/tools/ImageConverter.java
+ * https://github.com/ome/bioformats/blob/develop/components/bio-formats-tools/src/loci/formats/tools/ImageConverter.java
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,6 +49,7 @@ import loci.formats.meta.IMetadata
 import loci.formats.meta.MetadataRetrieve
 import loci.formats.meta.MetadataStore
 import loci.formats.ome.OMEPyramidStore
+import loci.formats.out.OMETiffWriter
 import loci.formats.out.TiffWriter
 import loci.formats.services.OMEXMLService
 import loci.formats.services.OMEXMLServiceImpl
@@ -71,6 +71,7 @@ class ImageConverter {
     File input
     List<CytomineFile> outputs = []
     String outputPattern
+    String format
 
     IFormatReader reader
     TiffWriter writer
@@ -78,6 +79,9 @@ class ImageConverter {
     int tileWidth
     int tileHeight
     int series
+
+    boolean keepOriginalMetadata
+    boolean flatten
 
     int width = 0
     int height = 0
@@ -91,16 +95,28 @@ class ImageConverter {
     MetadataStore store
     HashMap<String, Integer> nextOutputIndex = new HashMap<String, Integer>()
 
-    ImageConverter(File input, File targetDirectory, def series, def tileSize = 256,
-                   def compression = "LZW") {
+    ImageConverter(File input, File target, Integer series, String compression,
+                   Boolean keepOriginalMetadata, Boolean flatten, Integer nPyramidResolutions,
+                   Integer pyramidScaleFactor, Integer tileSize = 256) {
         this.input = input
         this.series = series ?: -1
         this.tileWidth = tileSize
         this.tileHeight = tileSize
         this.compression = compression
+        this.keepOriginalMetadata = keepOriginalMetadata
+        this.flatten = flatten
+        this.pyramidResolutions = nPyramidResolutions
+        this.pyramidScale = pyramidScaleFactor
 
-        String basePath = BioFormatsUtils.removeExtension(input.absolutePath - input.parent)
-        this.outputPattern = new File(targetDirectory, "${basePath}${OUT_PATTERN}.tif").absolutePath
+        if (target.isDirectory()) {
+            String basePath = BioFormatsUtils.removeExtension(input.absolutePath - input.parent)
+            this.outputPattern = new File(target, "${basePath}${OUT_PATTERN}.tif").absolutePath
+            this.format = "TIFF"
+        }
+        else {
+            this.outputPattern = target.absolutePath
+            this.format = "OMETIFF"
+        }
     }
 
     List<CytomineFile> convert() {
@@ -126,11 +142,19 @@ class ImageConverter {
 
             // OutputIndex should be reset at the start of a new series
             nextOutputIndex.clear()
-
-            int resolutionCount = reader.getResolutionCount()
+            boolean generatePyramid = pyramidResolutions > reader.getResolutionCount()
+            int resolutionCount = generatePyramid ? pyramidResolutions : reader.getResolutionCount();
             for (int res = 0; res < resolutionCount; res++) {
-                reader.setResolution(res)
+                if (!generatePyramid) {
+                    reader.setResolution(res);
+                }
                 firstTile = true
+
+                if (generatePyramid && res > 0) {
+                    int scale = (int) Math.pow(pyramidScale, res);
+                    width /= scale;
+                    height /= scale;
+                }
 
                 int writerSeries = series == -1 ? q : 0
                 writer.setSeries(writerSeries)
@@ -150,6 +174,7 @@ class ImageConverter {
                     if (outputName == FormatTools.getTileFilename(0, 0, 0, outputName)) {
                         int[] coordinates = FormatTools.getZCTCoords(order.getValue(), sizeZ, sizeC, sizeT,
                                 sizeZ * sizeC * sizeT, i)
+                        // For legacy mode
                         String channelName = retrieve.getChannelName(q, coordinates[1]) ?: coordinates[1]
                         outputs << new CytomineFile(outputName, coordinates[1], coordinates[0],
                                 coordinates[2], channelName)
@@ -197,7 +222,13 @@ class ImageConverter {
     }
 
     private def setupWriter() {
-        writer = new TiffWriter()
+        if (this.format == "OMETIFF") {
+            writer = new OMETiffWriter()
+        }
+        else {
+            writer = new TiffWriter()
+        }
+
         writer.setMetadataOptions(options)
         writer.setCanDetectBigTiff(true)
         writer.setWriteSequentially(true)
@@ -246,8 +277,8 @@ class ImageConverter {
         reader.setMetadataOptions(options)
         reader.setGroupFiles(true)
         reader.setMetadataFiltered(true)
-        reader.setOriginalMetadataPopulated(true)
-        reader.setFlattenedResolutions(true) //TODO
+        reader.setOriginalMetadataPopulated(keepOriginalMetadata)
+        reader.setFlattenedResolutions(flatten)
 
         try {
             ServiceFactory factory = new ServiceFactory()
@@ -266,6 +297,8 @@ class ImageConverter {
         store = reader.getMetadataStore()
         MetadataTools.populatePixels(store, reader, false, false)
 
+        // only switch series if the '-series' flag was used;
+        // otherwise default to series 0
         if (series >= 0) {
             reader.setSeries(series)
         }
@@ -407,6 +440,13 @@ class ImageConverter {
                 int outputX = x * w
                 int outputY = y * h
 
+                if (currentFile.indexOf(FormatTools.TILE_NUM) >= 0 ||
+                        currentFile.indexOf(FormatTools.TILE_X) >= 0 ||
+                        currentFile.indexOf(FormatTools.TILE_Y) >= 0) {
+                    outputX = 0;
+                    outputY = 0;
+                }
+
                 if (writer instanceof TiffWriter) {
                     ((TiffWriter) writer).saveBytes(outputIndex, buf,
                             ifd, outputX, outputY, tileWidth, tileHeight)
@@ -499,9 +539,9 @@ class ImageConverter {
             for (int i = 1; i < pyramidResolutions; i++) {
                 int scale = (int) Math.pow(pyramidScale, i)
                 ((OMEPyramidStore) meta).setResolutionSizeX(
-                        new PositiveInteger(width / scale), series, i)
+                        new PositiveInteger((int) width / scale), series, i)
                 ((OMEPyramidStore) meta).setResolutionSizeY(
-                        new PositiveInteger(height / scale), series, i)
+                        new PositiveInteger((int) height / scale), series, i)
             }
         }
     }

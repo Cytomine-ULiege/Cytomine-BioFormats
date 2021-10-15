@@ -34,14 +34,35 @@ class Convertor extends Worker {
     private static final Logger log = LoggerFactory.getLogger(Convertor.class)
 
     private def convertedFiles
+    private File output = null
 
-    boolean group
-    boolean onlyBiggestSerie
+    Boolean legacyMode
 
-    public Convertor(def file, def group, def onlyBiggestSerie) {
-        this.file = file
+    String compression
+    Boolean group
+    Boolean onlyBiggestSeries
+    Boolean keepOriginalMetadata
+    Boolean flatten
+    Integer nPyramidResolutions = 1
+    Integer pyramidScaleFactor = 1
+
+    public Convertor(File input, String output, Boolean group, Boolean onlyBiggestSeries,
+                     Boolean keepOriginalMetadata, String compression, Boolean flatten,
+                     Integer nPyramidResolutions, Integer pyramidScaleFactor, Boolean legacyMode) {
+        this.file = input
+        if (output != null) {
+            this.output = new File(output)
+        }
         this.group = group
-        this.onlyBiggestSerie = onlyBiggestSerie
+        this.onlyBiggestSeries = onlyBiggestSeries
+        this.keepOriginalMetadata = keepOriginalMetadata
+        this.compression = compression
+        this.flatten = flatten
+        if (!this.flatten) {
+            this.nPyramidResolutions = nPyramidResolutions
+            this.pyramidScaleFactor = pyramidScaleFactor ?: 2
+        }
+        this.legacyMode = legacyMode
     }
 
     def process() throws Exception {
@@ -50,16 +71,28 @@ class Convertor extends Worker {
         def reader = new Memoizer(new ImageReader(), 0, new File(BioFormatsUtils.CACHE_DIRECTORY))
         reader.setId(file.absolutePath)
 
-        def serieNumber = (onlyBiggestSerie) ? BioFormatsUtils.getBiggestSeries(reader) : -1
+        def serieNumber = (onlyBiggestSeries) ? BioFormatsUtils.getBiggestSeries(reader) : -1
 
-        File parentDirectory = file.parentFile
-        File targetDirectory = new File(parentDirectory, "conversion")
-        targetDirectory.mkdirs()
-        targetDirectory.setReadable(true, false)
-        targetDirectory.setWritable(true, false)
+        if (this.legacyMode || this.output == null) {
+            File parentDirectory = file.parentFile
+            output = new File(parentDirectory, "conversion")
+            output.mkdirs()
+            output.setReadable(true, false)
+            output.setWritable(true, false)
+        }
+        else {
+            if (output.path.endsWith(".EPTIFF")) {
+                // If we want an exploded pyramidal tiff (equivalent to legacy mode)
+                output.mkdirs()
+                output.setReadable(true, false)
+                output.setWritable(true, false)
+            }
+        }
 
-        ImageConverter ic = new ImageConverter(file, targetDirectory, serieNumber)
-        List<CytomineFile> results = []
+
+        ImageConverter ic = new ImageConverter(file, output, serieNumber, compression, keepOriginalMetadata,
+                flatten, nPyramidResolutions, pyramidScaleFactor)
+        List<File> results = []
         try {
             results = ic.convert()
         }
@@ -68,15 +101,23 @@ class Convertor extends Worker {
             throw new FormatException("Error during conversion by BioFormats")
         }
 
-        log.info("conversion result")
-        log.info(results.toString())
-        this.convertedFiles = results
+        if (this.legacyMode) {
+            log.info("conversion result")
+            log.info(results.toString())
+            this.convertedFiles = results
+        }
+        else {
+            this.convertedFiles = [output]
+        }
     }
 
 
 
     @Override
     def getOutput() {
-        return [files: convertedFiles*.toMap()]
+        if (this.legacyMode) {
+            return [files: convertedFiles*.toMap()]
+        }
+        return [file: output.absolutePath]
     }
 }
