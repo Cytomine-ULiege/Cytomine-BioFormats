@@ -80,6 +80,7 @@ class PropertyExtractor extends Worker {
         def reader = new Memoizer(new ImageReader(), 0, new File(BioFormatsUtils.CACHE_DIRECTORY))
         reader.setMetadataFiltered(true)
         reader.setOriginalMetadataPopulated(true)
+        reader.setFlattenedResolutions(false)
 
         // create OME-XML metadata store
         try {
@@ -317,6 +318,27 @@ class PropertyExtractor extends Worker {
         }
         if (!planes.isEmpty()) {
             properties['Bioformats.Planes'] = planes
+        }
+
+        def pyramid = []
+        (0..<reader.getResolutionCount()).each { r ->
+            try {
+                reader.setResolution(r)
+                Integer resolution = reader.getResolution()
+                Integer width = reader.getSizeX()
+                Integer height = reader.getSizeY()
+                pyramid << [
+                        '_Resolution': resolution,
+                        'Width': width,
+                        'Height': height,
+                        'TileWidth': reader.getOptimalTileWidth(),
+                        'TileHeight': reader.getOptimalTileHeight()
+                ]
+            }
+            catch (Exception ignored) {}
+        }
+        if (!pyramid.isEmpty()) {
+            properties['Bioformats.Pyramid'] = pyramid
         }
 
         int seriesCount = reader.getSeriesCount()
