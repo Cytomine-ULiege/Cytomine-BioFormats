@@ -44,7 +44,7 @@ import loci.formats.meta.IMetadata
 import loci.formats.meta.MetadataRetrieve
 import loci.formats.meta.MetadataStore
 import loci.formats.ome.OMEPyramidStore
-import loci.formats.out.OMETiffWriter
+import loci.formats.out.PyramidOMETiffWriter
 import loci.formats.out.TiffWriter
 import loci.formats.services.OMEXMLService
 import loci.formats.services.OMEXMLServiceImpl
@@ -220,7 +220,7 @@ class ImageConverter {
 
     private def setupWriter() {
         if (this.format == "OMETIFF") {
-            writer = new OMETiffWriter()
+            writer = new PyramidOMETiffWriter()
         } else {
             writer = new TiffWriter()
         }
