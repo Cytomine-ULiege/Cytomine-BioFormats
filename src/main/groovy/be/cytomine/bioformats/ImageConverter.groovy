@@ -85,6 +85,9 @@ class ImageConverter {
     int pyramidScale = 1, pyramidResolutions = 1
     boolean firstTile = true
 
+    int fullWidth = 0
+    int fullHeight = 0
+
     DynamicMetadataOptions options = new DynamicMetadataOptions()
     OMEXMLService service
     MetadataStore store
@@ -148,8 +151,8 @@ class ImageConverter {
 
                 if (generatePyramid && res > 0) {
                     int scale = (int) Math.pow(pyramidScale, res)
-                    width = reader.getSizeX() / scale;
-                    height = reader.getSizeY() /scale;
+                    width = reader.getSizeX() / scale
+                    height = reader.getSizeY() / scale
                 }
                 LOGGER.info("[Series $q] Converting resolution ${res+1}/$resolutionCount " +
                         "- $width x $height")
@@ -301,6 +304,8 @@ class ImageConverter {
 
         width = reader.getSizeX()
         height = reader.getSizeY()
+        fullWidth = reader.getSizeX()
+        fullHeight = reader.getSizeY()
     }
 
     // -- Helper methods --
@@ -545,13 +550,17 @@ class ImageConverter {
     private byte[] getTile(IFormatReader reader, int resolution,
                            int no, int x, int y, int w, int h)
             throws loci.formats.FormatException, IOException {
+
+        int scale = (int) Math.pow(pyramidScale, resolution)
         if (resolution < reader.getResolutionCount()) {
             reader.setResolution(resolution)
-            return reader.openBytes(no, x, y, w, h)
+            int expectedWidth = fullWidth / scale
+            if (expectedWidth == reader.getSizeX()) {
+                return reader.openBytes(no, x, y, w, h)
+            }
         }
         reader.setResolution(0)
         IImageScaler scaler = new SimpleImageScaler()
-        int scale = (int) Math.pow(pyramidScale, resolution)
         byte[] tile =
                 reader.openBytes(no, x * scale, y * scale, w * scale, h * scale)
         int type = reader.getPixelType()
