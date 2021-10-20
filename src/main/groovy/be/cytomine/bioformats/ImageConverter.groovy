@@ -148,8 +148,8 @@ class ImageConverter {
 
                 if (generatePyramid && res > 0) {
                     int scale = (int) Math.pow(pyramidScale, res)
-                    width /= scale
-                    height /= scale
+                    width = reader.getSizeX() / scale;
+                    height = reader.getSizeY() /scale;
                 }
                 LOGGER.info("[Series $q] Converting resolution ${res+1}/$resolutionCount " +
                         "- $width x $height")
