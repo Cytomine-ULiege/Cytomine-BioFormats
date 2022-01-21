@@ -17,6 +17,7 @@ ARG FROM_VERSION
 FROM ${FROM_NAMESPACE}/java8:$FROM_VERSION
 
 ENV BIOFORMAT_PORT 4321
+ENV BIOFORMAT_POOL_SIZE 4
 
 RUN apt-get -y update && \
     apt-get install -y \

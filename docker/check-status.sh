@@ -15,5 +15,5 @@
 COUNT=$(ps aux | grep "java -jar /tmp/cytomine-bioformats-wrapper.jar" | grep -v grep | wc -l)
 if [ $COUNT -lt 1 ]; then
     echo "$COUNT / 1 on $(date)"
-    java -jar /tmp/cytomine-bioformats-wrapper.jar $1 > /tmp/log &
+    java -jar /tmp/cytomine-bioformats-wrapper.jar $1 $2 > /tmp/log &
 fi;

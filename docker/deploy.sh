@@ -18,7 +18,8 @@ java -jar /tmp/cytomine-bioformats-wrapper.jar $BIOFORMAT_PORT > /tmp/log &
 
 touch /tmp/crontab
 echo "BIOFORMAT_PORT=$BIOFORMAT_PORT" >> /tmp/crontab
-echo "*/1 * * * * /bin/bash /tmp/check-status.sh $BIOFORMAT_PORT >> /tmp/cron.out" >> /tmp/crontab
+echo "BIOFORMAT_POOL_SIZE=$BIOFORMAT_POOL_SIZE" >> /tmp/crontab
+echo "*/1 * * * * /bin/bash /tmp/check-status.sh $BIOFORMAT_PORT $BIOFORMAT_POOL_SIZE >> /tmp/cron.out" >> /tmp/crontab
 crontab /tmp/crontab
 rm /tmp/crontab
 
