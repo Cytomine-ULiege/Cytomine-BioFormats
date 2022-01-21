@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-java -jar /tmp/cytomine-bioformats-wrapper.jar $BIOFORMAT_PORT > /tmp/log &
+java -jar /tmp/cytomine-bioformats-wrapper.jar $BIOFORMAT_PORT $BIOFORMAT_POOL_SIZE > /tmp/log &
 
 touch /tmp/crontab
 echo "BIOFORMAT_PORT=$BIOFORMAT_PORT" >> /tmp/crontab
