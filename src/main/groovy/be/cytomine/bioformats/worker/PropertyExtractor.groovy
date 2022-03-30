@@ -287,23 +287,29 @@ class PropertyExtractor extends Worker {
         ]
 
         if (includeRaw) {
-            reader.getGlobalMetadata().each {
-                if (legacyMode) {
-                    properties << [(it.key.replaceAll("\\|", ".").replaceAll(" #", "[") + "]"): it.value]
-                } else {
-                    List tokens = it.key.replaceAll("\\|", ".").split(" #")
-                    String key = tokens[0]
-                    if (key in properties.keySet()) {
-                        def existing = properties[key]
-                        if (existing instanceof List) {
-                            properties[key] = existing + [it.value]
-                        } else {
-                            properties[key] = [existing, it.value]
-                        }
+            def metadata = [reader.getGlobalMetadata(), reader.getSeriesMetadata()]
+
+            metadata.each {table ->
+                table.each {
+                    if (legacyMode) {
+                        properties << [(it.key.replaceAll("\\|", ".").replaceAll(" #", "[") + "]"): it.value]
                     } else {
-                        properties << [(key): it.value]
+                        String key = it.key.replaceAll("\\|", ".")
+                                .replaceAll(/ #([0-9]+)/,/[$1]/)
+                                .replaceAll(/\[([0-9]+)\]$/, "")
+                        if (key in properties.keySet()) {
+                            def existing = properties[key]
+                            if (existing instanceof List) {
+                                properties[key] = existing + [it.value]
+                            } else {
+                                properties[key] = [existing, it.value]
+                            }
+                        } else {
+                            properties << [(key): it.value]
+                        }
                     }
                 }
+
             }
         }
 
