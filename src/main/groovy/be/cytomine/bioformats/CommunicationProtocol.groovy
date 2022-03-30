@@ -68,9 +68,12 @@ class CommunicationProtocol {
                 def flatten = getParamValue(json, 'flatten', true)
                 def nPyramidResolutions = getParamValue(json, 'nPyramidResolutions', null)
                 def pyramidScaleFactor = getParamValue(json, 'pyramidScaleFactor', 2)
+                def tileSize = getParamValue(json, 'tileSize', 256)
+                def applyLUTS = getParamValue(json, 'applyLUTs', true)
                 def legacyMode = getParamValue(json, 'legacyMode', true)
                 return new Convertor(file, output, json.group, json.onlyBiggestSerie, keepOriginalMetadata,
-                        compression, flatten, nPyramidResolutions, pyramidScaleFactor, legacyMode)
+                        compression, flatten, nPyramidResolutions, pyramidScaleFactor, tileSize,
+                        applyLUTS, legacyMode)
             case "properties":
                 def includeRawProperties = getParamValue(json, 'includeRawProperties', false)
                 def legacyMode = getParamValue(json, 'legacyMode', true)

@@ -84,6 +84,7 @@ class ImageConverter {
     int yCoordinate = 0
     int pyramidScale = 1, pyramidResolutions = 1
     boolean firstTile = true
+    boolean lookup = true
 
     int fullWidth = 0
     int fullHeight = 0
@@ -93,9 +94,24 @@ class ImageConverter {
     MetadataStore store
     HashMap<String, Integer> nextOutputIndex = new HashMap<String, Integer>()
 
+    /**
+     *
+     * @param input
+     * @param target
+     * @param series specify which image series to convert
+     *  Positive integer: the series' index
+     *  Null or negative: all series
+     * @param compression
+     * @param keepOriginalMetadata
+     * @param flatten
+     * @param nPyramidResolutions
+     * @param pyramidScaleFactor
+     * @param tileSize
+     *  If 0, use minimum between optimal tile size and image size
+     */
     ImageConverter(File input, File target, Integer series, String compression,
                    Boolean keepOriginalMetadata, Boolean flatten, Integer nPyramidResolutions,
-                   Integer pyramidScaleFactor, Integer tileSize = 256) {
+                   Integer pyramidScaleFactor, Integer tileSize = 256, Boolean applyLUTs = true) {
         this.input = input
         this.series = (series != null) ? series : -1
         this.tileWidth = tileSize
@@ -105,6 +121,7 @@ class ImageConverter {
         this.flatten = flatten
         this.pyramidResolutions = nPyramidResolutions
         this.pyramidScale = pyramidScaleFactor
+        this.lookup = applyLUTs
 
         if (target.isDirectory()) {
             String basePath = BioFormatsUtils.removeExtension(input.absolutePath - input.parent)
@@ -337,7 +354,10 @@ class ImageConverter {
         byte[] buf = getTile(reader, writer.getResolution(), index,
                 xCoordinate, yCoordinate, width, height)
 
-        applyLUT(writer)
+        if (lookup) {
+            applyLUT(writer)
+        }
+
         long m = System.currentTimeMillis()
         writer.saveBytes(outputIndex, buf)
         return m
@@ -429,8 +449,9 @@ class ImageConverter {
                         ifd.put(IFD.TILE_WIDTH, tileWidth)
                     }
                 }
-
-                applyLUT(writer)
+                if (lookup) {
+                    applyLUT(writer)
+                }
                 if (m == null) {
                     m = System.currentTimeMillis()
                 }

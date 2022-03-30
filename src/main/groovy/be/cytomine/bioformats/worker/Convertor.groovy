@@ -41,12 +41,15 @@ class Convertor extends Worker {
     Boolean onlyBiggestSeries
     Boolean keepOriginalMetadata
     Boolean flatten
+    Boolean applyLUTs
     Integer nPyramidResolutions = 1
     Integer pyramidScaleFactor = 1
+    Integer tileSize
 
     Convertor(File input, String output, Boolean group, Boolean onlyBiggestSeries,
               Boolean keepOriginalMetadata, String compression, Boolean flatten,
-              Integer nPyramidResolutions, Integer pyramidScaleFactor, Boolean legacyMode) {
+              Integer nPyramidResolutions, Integer pyramidScaleFactor, Integer tileSize,
+              Boolean applyLUTs, Boolean legacyMode) {
         this.file = input
         if (output != null) {
             this.output = new File(output)
@@ -60,6 +63,8 @@ class Convertor extends Worker {
             this.nPyramidResolutions = nPyramidResolutions
             this.pyramidScaleFactor = pyramidScaleFactor ?: 2
         }
+        this.tileSize = tileSize
+        this.applyLUTs = applyLUTs
         this.legacyMode = legacyMode
     }
 
@@ -86,7 +91,8 @@ class Convertor extends Worker {
 
 
         ImageConverter ic = new ImageConverter(file, output, serieNumber, compression,
-                keepOriginalMetadata, flatten, nPyramidResolutions, pyramidScaleFactor)
+                keepOriginalMetadata, flatten, nPyramidResolutions, pyramidScaleFactor,
+                tileSize, applyLUTs)
         List<File> results
         try {
             results = ic.convert()
