@@ -173,9 +173,9 @@ class PropertyExtractor extends Worker {
         }
         catch(Exception ignored) {}
 
-        def spp = null
+        def legacySpp = null
         try {
-            spp = meta.getChannelSamplesPerPixel(biggestSeries, 0).value
+            legacySpp = meta.getChannelSamplesPerPixel(biggestSeries, 0).value
         }
         catch (Exception ignored) {}
 
@@ -228,6 +228,12 @@ class PropertyExtractor extends Worker {
             }
             catch (Exception ignored) {}
 
+            Integer spp = null
+            try {
+                spp = meta.getChannelSamplesPerPixel(biggestSeries, c).value
+            }
+            catch (Exception ignored) {}
+
             String suggestedName = (String) (channelName ?: emissionWavelength ?: excitationWavelength)
             if (suggestedName != null)
                 channelNames << [(c): suggestedName]
@@ -239,7 +245,8 @@ class PropertyExtractor extends Worker {
                     ExcitationWavelength: excitationWavelength,
                     ExcitationWavelengthUnit: excitationWavelengthUnit,
                     Color: color,
-                    SuggestedName: suggestedName
+                    SuggestedName: suggestedName,
+                    SamplesPerPixel: spp
             ]
         }
 
@@ -261,7 +268,7 @@ class PropertyExtractor extends Worker {
                 'Bioformats.Pixels.EffectiveSizeC': reader.getEffectiveSizeC(),
                 'Bioformats.Pixels.IsRGB': reader.isRGB(),
                 'Bioformats.Pixels.RGBChannelCount': reader.getRGBChannelCount(),
-                'Bioformats.Pixels.SamplesPerPixel': spp,
+                'Bioformats.Pixels.SamplesPerPixel': legacySpp,
                 'Bioformats.Pixels.PhysicalSizeX': physicalSizeX,
                 'Bioformats.Pixels.PhysicalSizeXUnit': physicalSizeXUnit,
                 'Bioformats.Pixels.PhysicalSizeY': physicalSizeY,
