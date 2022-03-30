@@ -41,9 +41,12 @@ import loci.formats.gui.Index16ColorModel
 import loci.formats.in.DynamicMetadataOptions
 import loci.formats.meta.DummyMetadata
 import loci.formats.meta.IMetadata
+import loci.formats.meta.IPyramidStore
 import loci.formats.meta.MetadataRetrieve
 import loci.formats.meta.MetadataStore
 import loci.formats.ome.OMEPyramidStore
+import loci.formats.out.DicomWriter
+import loci.formats.out.OMETiffWriter
 import loci.formats.out.PyramidOMETiffWriter
 import loci.formats.out.TiffWriter
 import loci.formats.services.OMEXMLService
@@ -166,6 +169,8 @@ class ImageConverter {
                 }
                 firstTile = true
 
+                width = reader.getSizeX()
+                height = reader.getSizeY()
                 if (generatePyramid && res > 0) {
                     int scale = (int) Math.pow(pyramidScale, res)
                     width = reader.getSizeX() / scale
@@ -185,6 +190,9 @@ class ImageConverter {
                 int endPlane = numImages
                 numImages = endPlane - startPlane
                 total += numImages
+
+                writer.setTileSizeX(tileWidth)
+                writer.setTileSizeY(tileHeight)
 
                 int count = 0
                 for (int i = startPlane; i < endPlane; i++) {
@@ -339,14 +347,11 @@ class ImageConverter {
     private long convertPlane(IFormatWriter writer, int index, int outputIndex,
                               String currentFile)
             throws loci.formats.FormatException, IOException {
-        if (DataTools.safeMultiply64(width, height) >=
-                DataTools.safeMultiply64(4096, 4096) ||
-                tileWidth > 0 || tileHeight > 0) {
+        if (doTileConversion(writer, currentFile)) {
             // this is a "big image" or an output tile size was set, so we will attempt
             // to convert it one tile at a time
 
-            if ((writer instanceof TiffWriter) || ((writer instanceof ImageWriter) &&
-                    (((ImageWriter) writer).getWriter(outputPattern) instanceof TiffWriter))) {
+            if (isTiledWriter(writer, outputPattern)) {
                 return convertTilePlane(writer, index, outputIndex, currentFile)
             }
         }
@@ -383,6 +388,9 @@ class ImageConverter {
         if (tileHeight > 0 && tileHeight <= height) {
             h = tileHeight
         }
+
+        w = writer.setTileSizeX(w)
+        h = writer.setTileSizeY(h)
 
         if (firstTile) {
             LOGGER.info("Tile size = {} x {}", w, h)
@@ -443,10 +451,10 @@ class ImageConverter {
                     nextOutputIndex.put(tileName, outputIndex + 1)
 
                     if (nTileRows > 1) {
-                        ifd.put(IFD.TILE_LENGTH, tileHeight)
+                        tileHeight = writer.setTileSizeY(tileHeight)
                     }
                     if (nTileCols > 1) {
-                        ifd.put(IFD.TILE_WIDTH, tileWidth)
+                        tileWidth = writer.setTileSizeX(tileWidth)
                     }
                 }
                 if (lookup) {
@@ -471,13 +479,19 @@ class ImageConverter {
 
                 if (writer instanceof TiffWriter) {
                     ((TiffWriter) writer).saveBytes(outputIndex, buf,
-                            ifd, outputX, outputY, tileWidth, tileHeight)
+                            outputX, outputY, tileWidth, tileHeight)
                 } else if (writer instanceof ImageWriter) {
                     IFormatWriter baseWriter = ((ImageWriter) writer).getWriter(outputPattern)
                     if (baseWriter instanceof TiffWriter) {
-                        ((TiffWriter) baseWriter).saveBytes(outputIndex, buf, ifd,
+                        ((TiffWriter) baseWriter).saveBytes(outputIndex, buf,
                                 outputX, outputY, tileWidth, tileHeight)
+                    } else {
+                        writer.saveBytes(outputIndex, buf, outputX, outputY,
+                                tileWidth, tileHeight)
                     }
+                } else {
+                    writer.saveBytes(outputIndex, buf, outputX, outputY,
+                            tileWidth, tileHeight)
                 }
             }
         }
@@ -589,6 +603,27 @@ class ImageConverter {
                 FormatTools.getBytesPerPixel(type), reader.isLittleEndian(),
                 FormatTools.isFloatingPoint(type), reader.getRGBChannelCount(),
                 reader.isInterleaved())
+    }
+
+    private boolean isTiledWriter(IFormatWriter writer, String outputFile)
+            throws FormatException {
+        if (writer instanceof ImageWriter) {
+            return isTiledWriter(((ImageWriter) writer).getWriter(outputFile), outputFile)
+        }
+        return (writer instanceof TiffWriter) || (writer instanceof DicomWriter)
+    }
+
+    private boolean doTileConversion(IFormatWriter writer, String outputFile)
+            throws FormatException {
+        if (writer instanceof DicomWriter ||
+                (writer instanceof ImageWriter &&
+                        ((ImageWriter) writer).getWriter(outputFile) instanceof DicomWriter)) {
+            MetadataStore r = reader.getMetadataStore();
+            return !(r instanceof IPyramidStore)
+                    || ((IPyramidStore) r).getResolutionCount(reader.getSeries()) > 1
+        }
+        return DataTools.safeMultiply64(width, height) >= DataTools.safeMultiply64(4096, 4096)
+                || tileWidth > 0 || tileHeight > 0
     }
 
 }
