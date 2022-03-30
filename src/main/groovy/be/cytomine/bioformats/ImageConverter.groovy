@@ -132,7 +132,11 @@ class ImageConverter {
             this.format = "TIFF"
         } else {
             this.outputPattern = target.absolutePath
-            this.format = "OMETIFF"
+            if (this.pyramidResolutions == 1) {
+                this.format = "OMETIFF"
+            } else {
+                this.format = "PYROMETIFF"
+            }
         }
     }
 
@@ -247,8 +251,10 @@ class ImageConverter {
     }
 
     private def setupWriter() {
-        if (this.format == "OMETIFF") {
+        if (this.format == "PYROMETIFF") {
             writer = new PyramidOMETiffWriter()
+        } else if (this.format == "OMETIFF") {
+            writer = new OMETiffWriter()
         } else {
             writer = new TiffWriter()
         }
