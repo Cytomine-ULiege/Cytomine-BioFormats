@@ -14,7 +14,11 @@ node {
     }
 
     stage ('Compute version number') {
-        env.VERSION_NUMBER = sh(script: 'scripts/compute-version.sh ${BRANCH_NAME}', returnStdout: true)
+        env.VERSION_NUMBER = sh(
+            script: 'scripts/ci.sh version-number ${NAMESPACE} docker.io bioformat ${BRANCH_NAME}',
+            returnStdout: true
+        )
+        echo("Version number: ${env.VERSION_NUMBER}")
 
         stage ('Download and cache dependencies') {
             sh 'scripts/ci.sh dependencies ${NAMESPACE} docker.io bioformat ${BRANCH_NAME}'

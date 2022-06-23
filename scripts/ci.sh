@@ -6,14 +6,39 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ROOT="$( cd $DIR && cd .. && pwd )"
 ME=$(basename $0)
 
-source $DIR/build-version.sh
+function getGitHeadBranch {
+  # Go to root
+  cd $(git rev-parse --show-toplevel)
 
-NAMESPACE=${2:-cytomine}
-DOCKER_REGISTRY=${3:-docker.io}
-IMAGE_NAME=${4:-bioformat}
-BRANCH=${5:-$(get_git_head_branch)}
-TAG=$(get_git_tag $BRANCH)
-VERSION_NUMBER=${VERSION_NUMBER:-$(get_version_number $BRANCH)}
+  echo $(git rev-parse --abbrev-ref HEAD)
+}
+
+function getGitTag {
+  # Go to root
+  cd $(git rev-parse --show-toplevel)
+
+  lastGitTag=$(git describe --long --dirty)
+  if [[ $lastGitTag =~ v[0-9]+.[0-9]+.[0-9]+-0-[0-9a-g]{8,9}$ ]]; then
+    echo $lastGitTag
+  else
+    echo ${BRANCH:-$(getGitHeadBranch)}
+  fi
+}
+
+function getVersionNumber {
+  # Go to root
+  cd $(git rev-parse --show-toplevel)
+
+  lastGitTag=$(git describe --long --dirty --tags)
+  if [[ $lastGitTag =~ v[0-9]+.[0-9]+.[0-9]+-0-[0-9a-g]{8,9}$ ]]; then
+    # official release x.y.z
+    versionNumber=$(echo $lastGitTag | sed -r "s/v([0-9]+\.[0-9]+\.[0-9]+)-[0-9]+-.+/\1/")
+  else
+    # rc: branchname + date + 'SNAPSHOT'
+    versionNumber=${BRANCH:-$(getGitHeadBranch)}-$(date "+%Y%m%d%H%M%S")-SNAPSHOT
+  fi
+  echo $versionNumber
+}
 
 function printInfo() {
   echo "************************************** $ME - $1 ******************************************"
@@ -49,7 +74,7 @@ function buildJar() {
   mkdir -p ./ci
   containerId=$(docker create $image)
   docker start -ai  $containerId
-  docker cp $containerId:/app/build/libs/cytomine-bioformats-wrapper.jar ./ci
+  docker cp $containerId:/app/build/libs/cytomine-bioformats-wrapper.jar ./output
   docker rm $containerId
 }
 
@@ -92,8 +117,19 @@ function cleanDocker() {
   fi
 }
 
-# Commands
+#### Variables
+NAMESPACE=${2:-cytomine}
+DOCKER_REGISTRY=${3:-docker.io}
+IMAGE_NAME=${4:-bioformat}
+BRANCH=${5:-$(getGitHeadBranch)}
+TAG=$(getGitTag $BRANCH)
+VERSION_NUMBER=${VERSION_NUMBER:-$(getVersionNumber $BRANCH)}
+
+#### Commands
 case $1 in
+    "version-number")
+        echo $VERSION_NUMBER
+        ;;
     "dependencies")
         downloadDependencies
         ;;
