@@ -29,7 +29,7 @@ node {
         }
 
         stage ('Publish jar') {
-            sh 'scripts/ci.sh build-jar ${NAMESPACE} docker.io bioformat ${BRANCH_NAME}'
+            sh 'scripts/ci.sh publish-jar ${NAMESPACE} docker.io bioformat ${BRANCH_NAME}'
 
             stage ('Build Docker image') {
                 sh 'scripts/ci.sh build-docker ${NAMESPACE} docker.io bioformat ${BRANCH_NAME}'
@@ -52,7 +52,7 @@ node {
         }
 
         stage ('Clean Docker images') {
-            sh 'scripts/ci.h clean ${NAMESPACE} docker.io bioformat ${BRANCH_NAME'
+            sh 'scripts/ci.h clean ${NAMESPACE} docker.io bioformat ${BRANCH_NAME}'
         }
     }
 }
