@@ -71,7 +71,7 @@ function buildJar() {
     --build-arg VERSION_NUMBER=$VERSION_NUMBER \
     -t $image $ROOT
 
-  mkdir -p ./ci
+  mkdir -p ./output
   containerId=$(docker create $image)
   docker start -ai  $containerId
   docker cp $containerId:/app/build/libs/cytomine-bioformats-wrapper.jar ./output
