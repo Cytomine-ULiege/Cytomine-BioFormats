@@ -44,11 +44,14 @@ RUN sed -i -- 's/version '0.0.0'/version '$VERSION_NUMBER'/g' build.gradle \
 
 FROM openjdk:8 AS production
 
+ENV BIOFORMAT_POOL_SIZE 4
+EXPOSE 4321
+
 WORKDIR /app
 COPY --from=builder /app/build/libs/cytomine-bioformats-wrapper.jar .
 
-ENV BIOFORMAT_POOL_SIZE 4
-EXPOSE 4321
+COPY scripts/docker/docker-healthcheck.sh /usr/local/bin/docker-healthcheck
+HEALTHCHECK CMD ["docker-healthcheck"]
 
 # We use CMD shell form to allow variable substitution
 CMD java -jar /app/cytomine-bioformats-wrapper.jar 4321 ${BIOFORMAT_POOL_SIZE}
