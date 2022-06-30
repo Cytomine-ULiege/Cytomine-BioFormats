@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'be.cytomine.bioformats'
-version '3.1.0'
+version '0.0.0'
 
 sourceCompatibility = 1.8
 
@@ -29,9 +29,9 @@ dependencies {
         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
         exclude group: 'ch.qos.logback', module: 'logback-classic'
     }
-    compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.17.1'
-    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.17.1'
-    compile('org.apache.logging.log4j:log4j-slf4j-impl:2.17.1')
+    compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.17.2'
+    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.17.2'
+    compile('org.apache.logging.log4j:log4j-slf4j-impl:2.17.2')
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
@@ -58,6 +58,7 @@ run {
 }
 
 jar {
+    archiveName = 'cytomine-bioformats-wrapper.jar'
     manifest {
         attributes('Main-Class': 'be.cytomine.bioformats.BioFormatServerSocket')
     }
