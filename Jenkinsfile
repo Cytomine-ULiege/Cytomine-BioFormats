@@ -49,10 +49,36 @@ node {
                     }
                 }
             }
+
+            stage ('Check official release status') {
+                env.OFFICIAL_RELEASE = sh(
+                    script: 'scripts/ci.sh is-official-release ${NAMESPACE} docker.io bioformat ${BRANCH_NAME}',
+                    returnStdout: true
+                )
+                echo("Official Release to publish on Github ? ${env.OFFICIAL_RELEASE}")
+
+                if (env.OFFICIAL_RELEASE && env.OFFICIAL_RELEASE.toBoolean()) {
+                    echo("official")
+                    stage ('Publish official release on Github') {
+                        env.GITHUB_REPO = scm.getUserRemoteConfigs()[0].getUrl().replaceFirst(/^.*?(?::\/\/.*?\/|:)(.*).git$/, '$1')
+                        withCredentials(
+                            [
+                                usernamePassword(
+                                    credentialsId: 'GITHUB_RELEASE_CREDENTIAL',
+                                    usernameVariable: 'GITHUB_RELEASE_USER',
+                                    passwordVariable: 'GITHUB_RELEASE_TOKEN'
+                                )
+                            ]
+                        ) {
+                            sh 'scripts/ci.sh publish-github'
+                        }
+                    }
+                }
+            }
         }
 
         stage ('Clean Docker images') {
-            sh 'scripts/ci.sh clean ${NAMESPACE} docker.io bioformat ${BRANCH_NAME}'
+            sh 'scripts/ci.sh clean-docker ${NAMESPACE} docker.io bioformat ${BRANCH_NAME}'
         }
     }
 }
